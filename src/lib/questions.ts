@@ -185,9 +185,9 @@ const baseQuestions: Question[] = [
       "10 Stunden",
     ],
     correctAnswer: 1,
-    explanation: "Jugendliche dürfen maximal 8 Stunden täglich und 40 Stunden wöchentlich arbeiten (§ 8 JArbSchG). Es gibt keine Ausnahmen für eine 8½- oder 9-Stunden-Regelung bei Jugendlichen.",
-    hint: "Die Grundregel: 8 Stunden am Tag, 5 Tage die Woche = 40 Stunden.",
-    tags: ["JArbSchG", "§8", "Arbeitszeit"],
+    explanation: "§ 8 Abs. 1 JArbSchG: Grundsatz max. 8 Stunden/Tag und 40 Stunden/Woche. ACHTUNG: §8 Abs. 2a/2b erlaubt an einzelnen Tagen bis zu 8½ Stunden, wenn an anderen Tagen kürzer gearbeitet wird (Ausgleichsregelung). Die Prüfungsfrage zielt auf den GRUNDSATZ ab = 8 Stunden. Nicht verwechseln: Arbeitszeit (ohne Pausen) ≠ Schichtzeit (mit Pausen, max. 10h nach §12).",
+    hint: "Gefragt ist der GRUNDSATZ nach §8 Abs. 1 – nicht die Ausnahme. Wie viele Stunden × 5 Tage = 40h/Woche?",
+    tags: ["JArbSchG", "§8", "Arbeitszeit", "Grundsatz"],
   },
   {
     id: "hf1-010",

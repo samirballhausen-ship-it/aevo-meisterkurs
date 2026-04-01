@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import type { Question } from "@/lib/types";
@@ -22,13 +22,32 @@ interface QuestionCardProps {
   totalQuestions: number;
 }
 
+// Shuffle options and track where the correct answer moved
+function shuffleOptions(options: string[], correctIndex: number): { shuffled: string[]; newCorrectIndex: number } {
+  const entries = options.map((opt, i) => ({ opt, isCorrect: i === correctIndex }));
+  for (let i = entries.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [entries[i], entries[j]] = [entries[j], entries[i]];
+  }
+  return {
+    shuffled: entries.map(e => e.opt),
+    newCorrectIndex: entries.findIndex(e => e.isCorrect),
+  };
+}
+
 export function QuestionCard({ question, onAnswer, questionNumber, totalQuestions }: QuestionCardProps) {
+  // Shuffle options once per question (useMemo with question.id as dep)
+  const { shuffled: shuffledOptions, newCorrectIndex } = useMemo(
+    () => shuffleOptions(question.options ?? [], question.correctAnswer as number),
+    [question.id] // eslint-disable-line react-hooks/exhaustive-deps
+  );
+
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [showResult, setShowResult] = useState(false);
   const [showHint, setShowHint] = useState(false);
   const [startTime] = useState(Date.now());
 
-  const isCorrect = selectedAnswer === question.correctAnswer;
+  const isCorrect = selectedAnswer === newCorrectIndex;
 
   const handleSelect = useCallback(
     (index: number) => {
@@ -45,8 +64,8 @@ export function QuestionCard({ question, onAnswer, questionNumber, totalQuestion
   }, [isCorrect, onAnswer, startTime]);
 
   // Check if explanation/hint are generic (from auto-import)
-  const hasRealHint = question.hint && !question.hint.startsWith("Überlege, welche Antwort");
-  const hasRealExplanation = question.explanation && !question.explanation.startsWith("Die richtige Antwort ergibt sich");
+  const hasRealHint = question.hint && !question.hint.startsWith("Überlege, welche Antwort") && !question.hint.startsWith("Themenbereich:");
+  const hasRealExplanation = question.explanation && !question.explanation.startsWith("Die richtige Antwort ergibt sich") && !question.explanation.startsWith("Richtige Antwort:");
 
   // Build a useful hint from available data
   const displayHint = hasRealHint
@@ -56,7 +75,7 @@ export function QuestionCard({ question, onAnswer, questionNumber, totalQuestion
       : `Themenbereich: ${question.topic}. Überlege, welche Antwort im Kontext der AEVO am sinnvollsten ist.`;
 
   // Build explanation - show correct answer text if no real explanation
-  const correctOptionText = question.options?.[question.correctAnswer as number] ?? "";
+  const correctOptionText = shuffledOptions[newCorrectIndex] ?? "";
   const displayExplanation = hasRealExplanation
     ? question.explanation
     : `Die richtige Antwort ist: "${correctOptionText}"${question.tags.length > 0 ? ` (Thema: ${question.tags.join(", ")})` : ""}. Diese Frage stammt aus dem Bereich ${question.topic} im ${question.handlungsfeld}.`;
@@ -123,9 +142,9 @@ export function QuestionCard({ question, onAnswer, questionNumber, totalQuestion
 
           {/* Options */}
           <div className="space-y-2.5">
-            {question.options?.map((option, index) => {
+            {shuffledOptions.map((option, index) => {
               const isSelected = selectedAnswer === index;
-              const isCorrectOption = index === question.correctAnswer;
+              const isCorrectOption = index === newCorrectIndex;
 
               return (
                 <motion.button
