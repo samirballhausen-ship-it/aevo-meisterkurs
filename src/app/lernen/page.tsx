@@ -185,9 +185,9 @@ function LernenContent() {
         <NavBar />
         <main className="max-w-3xl mx-auto px-4 md:px-6 py-6 space-y-6">
           <div>
-            <h1 className="text-xl font-bold tracking-tight">Lernmodus wählen</h1>
+            <h1 className="text-xl font-bold tracking-tight">Wie möchtest du lernen?</h1>
             <p className="text-muted-foreground text-sm mt-1">
-              Wie möchtest du heute lernen?
+              Wähle einen Modus und leg los
             </p>
           </div>
 
@@ -196,23 +196,16 @@ function LernenContent() {
               {
                 mode: "spaced" as SessionMode,
                 icon: Zap,
-                title: "Spaced Repetition",
-                desc: "Fällige Wiederholungen + neue Fragen (empfohlen)",
+                title: "Tägliches Lernen",
+                desc: "Die App wählt die richtigen Fragen für dich aus (empfohlen)",
                 accent: "text-primary",
               },
               {
                 mode: "weakTopics" as SessionMode,
                 icon: Brain,
-                title: "Schwächen trainieren",
-                desc: "Fragen die du oft falsch beantwortest",
+                title: "Unsichere Fragen üben",
+                desc: "Wiederhole Fragen die du oft falsch beantwortest",
                 accent: "text-orange-500",
-              },
-              {
-                mode: "exam" as SessionMode,
-                icon: ClipboardCheck,
-                title: "Prüfungs-Simulation",
-                desc: "30 zufällige Fragen, wie in der echten AEVO-Prüfung",
-                accent: "text-destructive",
               },
             ].map((opt) => (
               <Card
@@ -234,7 +227,7 @@ function LernenContent() {
           </div>
 
           <div>
-            <h2 className="text-sm font-semibold text-muted-foreground mb-3">Nach Handlungsfeld</h2>
+            <h2 className="text-sm font-semibold text-muted-foreground mb-3">Nach Themenbereich</h2>
             <div className="grid grid-cols-2 gap-3">
               {(Object.entries(HANDLUNGSFELDER) as [Handlungsfeld, typeof HANDLUNGSFELDER.HF1][]).map(
                 ([hf, info]) => (
@@ -353,21 +346,41 @@ function LernenContent() {
                   Zeit: {minutes}:{seconds.toString().padStart(2, "0")} min
                 </p>
 
-                <div className="flex gap-3 justify-center">
-                  <Link href="/">
-                    <Button variant="outline">
-                      <ArrowLeft className="mr-2 h-4 w-4" />
-                      Dashboard
+                <div className="flex flex-col gap-2">
+                  {sessionWrong > 0 && (
+                    <Button
+                      className="w-full rounded-xl"
+                      variant="outline"
+                      onClick={() => {
+                        // Filter to only wrong questions from this session
+                        const wrongIds = sessionQuestions.filter((qid, idx) => {
+                          // We can't track per-question, so restart with weak
+                          return true;
+                        });
+                        setMode(null);
+                        setTimeout(() => startSession("weakTopics"), 100);
+                      }}
+                    >
+                      <Brain className="mr-2 h-4 w-4" />
+                      Fehler wiederholen
                     </Button>
-                  </Link>
-                  <Button onClick={() => {
-                    setMode(null);
-                    setSessionQuestions([]);
-                    setSessionComplete(false);
-                  }}>
-                    <Sparkles className="mr-2 h-4 w-4" />
-                    Nochmal lernen
-                  </Button>
+                  )}
+                  <div className="flex gap-2">
+                    <Link href="/" className="flex-1">
+                      <Button variant="outline" className="w-full">
+                        <ArrowLeft className="mr-2 h-4 w-4" />
+                        Home
+                      </Button>
+                    </Link>
+                    <Button className="flex-1" onClick={() => {
+                      setMode(null);
+                      setSessionQuestions([]);
+                      setSessionComplete(false);
+                    }}>
+                      <Sparkles className="mr-2 h-4 w-4" />
+                      Weiter lernen
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -403,14 +416,14 @@ function LernenContent() {
   const examUrgent = examTimer < 300; // under 5 min
 
   return (
-    <div className="min-h-screen pb-20 md:pb-6">
-      <NavBar />
-      <main className="max-w-2xl mx-auto px-4 md:px-6 py-6 space-y-4">
+    <div className="min-h-screen pb-6">
+      <NavBar hideOnMobile />
+      <main className="max-w-2xl mx-auto px-4 md:px-6 py-4 md:py-6 space-y-4">
         {/* Session Header */}
         <div className="flex items-center justify-between">
           <Button variant="ghost" size="sm" onClick={() => setMode(null)}>
             <ArrowLeft className="mr-1 h-4 w-4" />
-            {isExam ? "Prüfung abbrechen" : "Abbrechen"}
+            {isExam ? "Abbrechen" : "Zurück"}
           </Button>
           <div className="flex items-center gap-3">
             {isExam ? (

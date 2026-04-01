@@ -9,8 +9,10 @@ import { NavBar } from "@/components/nav-bar";
 import { ProgressRing } from "@/components/progress-ring";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { HANDLUNGSFELDER, type Handlungsfeld } from "@/lib/types";
+import Link from "next/link";
 import { BarChart3, Target, BookOpen, Trophy, CheckCircle2, TrendingUp, AlertTriangle } from "lucide-react";
 
 const container = {
@@ -130,7 +132,7 @@ export default function StatistikPage() {
             <CardHeader className="pb-3">
               <CardTitle className="text-sm flex items-center gap-2">
                 <Target className="h-4 w-4 text-primary" />
-                Prüfungsbereitschaft
+                Wie gut bin ich vorbereitet?
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -192,9 +194,16 @@ export default function StatistikPage() {
                 </div>
               </div>
 
-              <p className="text-center text-[10px] text-muted-foreground mt-4">
-                Score = 30% Abdeckung + 35% Korrektheit + 20% Wissen + 15% Balance. Ziel: ≥70%
-              </p>
+              {/* Klare Handlungsempfehlung statt Formel */}
+              {questionsAttempted > 0 && weakestHF.coverage < 0.5 && (
+                <div className="mt-4">
+                  <Link href={`/lernen?hf=${weakestHF.hf}`}>
+                    <Button variant="outline" className="w-full rounded-xl text-xs">
+                      Jetzt {HANDLUNGSFELDER[weakestHF.hf as Handlungsfeld].title} üben →
+                    </Button>
+                  </Link>
+                </div>
+              )}
             </CardContent>
           </Card>
         </motion.div>
@@ -203,7 +212,7 @@ export default function StatistikPage() {
         <motion.div variants={item}>
           <Card className="border-border/50 bg-card/50 backdrop-blur-lg">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm">Fortschritt pro Handlungsfeld</CardTitle>
+              <CardTitle className="text-sm">Fortschritt pro Themenbereich</CardTitle>
             </CardHeader>
             <CardContent className="space-y-5">
               {hfScores.map(({ hf, coverage, accuracy, total, mastered, inProgress }) => {

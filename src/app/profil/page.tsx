@@ -112,16 +112,13 @@ export default function ProfilPage() {
                 <Badge variant="secondary" className="text-[10px] shrink-0">Freigeschaltet</Badge>
               </div>
             ))}
-            {lockedAchievements.slice(0, 5).map((a) => (
-              <div key={a.id} className="flex items-center gap-3 p-2.5 rounded-lg opacity-40">
-                <span className="text-xl grayscale">{a.icon}</span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium">{a.title}</p>
-                  <p className="text-xs text-muted-foreground truncate">{a.description}</p>
-                </div>
-                <Badge variant="outline" className="text-[10px] shrink-0">Gesperrt</Badge>
+            {lockedAchievements.length > 0 && (
+              <div className="text-center py-3">
+                <p className="text-xs text-muted-foreground">
+                  🔒 {lockedAchievements.length} weitere Erfolge – lerne weiter um sie freizuschalten!
+                </p>
               </div>
-            ))}
+            )}
           </CardContent>
         </Card>
 
