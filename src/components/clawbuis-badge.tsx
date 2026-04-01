@@ -1,11 +1,20 @@
 "use client";
 
+import { useId } from "react";
 import { motion } from "framer-motion";
 
 /**
- * Echtes Clawbuis Logo: 5 Klauen mit Teal→Gold Gradient + goldener Core
+ * CLAWBUIS LOGO RULES:
+ * 1. ALWAYS use useId() for SVG gradient IDs – never hardcode IDs
+ *    (multiple instances on same page will break if IDs collide)
+ * 2. For sizes < 32px, use mono mode (currentColor) instead of gradient
+ *    (gradient strokes become invisible at small sizes)
+ * 3. Minimum visible size: h-5 w-5 (20px) in mono mode
+ * 4. For gradient mode: minimum h-8 w-8 (32px)
  */
 export function ClawbuisLogo({ className, mono }: { className?: string; mono?: boolean }) {
+  const gradId = useId().replace(/:/g, "_");
+
   return (
     <svg
       viewBox="0 0 64 76"
@@ -15,13 +24,13 @@ export function ClawbuisLogo({ className, mono }: { className?: string; mono?: b
     >
       {!mono && (
         <defs>
-          <linearGradient id="clawGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <linearGradient id={`claw${gradId}`} x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="#2dd4bf" />
             <stop offset="100%" stopColor="#c29b62" />
           </linearGradient>
         </defs>
       )}
-      <g fill="none" stroke={mono ? "currentColor" : "url(#clawGrad)"} strokeLinecap="round">
+      <g fill="none" stroke={mono ? "currentColor" : `url(#claw${gradId})`} strokeLinecap="round">
         <path d="M 20 52 C 16 44, 9 34, 7 24 C 5 16, 7 10, 11 10" strokeWidth="3" />
         <path d="M 23 46 C 21 36, 18 22, 19 12 C 20 6, 22 2, 25 4" strokeWidth="3.2" />
         <path d="M 30 44 C 29 32, 30 18, 32 6 C 33 1, 35 0, 36 3" strokeWidth="3.5" />
@@ -36,7 +45,7 @@ export function ClawbuisLogo({ className, mono }: { className?: string; mono?: b
 }
 
 /**
- * Compact badge for NavBar
+ * Compact badge – uses mono logo at small size for visibility
  */
 export function ClawbuisBadge({ className }: { className?: string }) {
   return (
@@ -44,11 +53,11 @@ export function ClawbuisBadge({ className }: { className?: string }) {
       href="https://clawbuis.com"
       target="_blank"
       rel="noopener noreferrer"
-      className={`inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-card/50 backdrop-blur-xl border border-border/20 text-muted-foreground hover:text-foreground hover:border-[#c29b62]/40 transition-all group shadow-lg shadow-[#c29b62]/5 hover:shadow-[#c29b62]/15 ${className ?? ""}`}
+      className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-full bg-card/40 backdrop-blur-xl border border-border/20 text-muted-foreground hover:text-foreground hover:border-[#c29b62]/40 transition-all group ${className ?? ""}`}
       whileHover={{ scale: 1.04, y: -1 }}
       whileTap={{ scale: 0.97 }}
     >
-      <ClawbuisLogo className="h-5 w-5" />
+      <ClawbuisLogo className="h-5 w-5 text-[#c29b62]" mono />
       <span className="text-[11px] font-medium tracking-wide">
         Powered by <span className="font-bold bg-gradient-to-r from-[#2dd4bf] to-[#c29b62] bg-clip-text text-transparent">CLAWBUIS</span>
       </span>
@@ -67,11 +76,10 @@ export function ClawbuisFooter() {
       transition={{ delay: 0.5, duration: 0.8 }}
       className="relative overflow-hidden mt-8"
     >
-      {/* Gradient divider */}
       <div className="h-px bg-gradient-to-r from-transparent via-[#c29b62]/30 to-transparent mb-8" />
 
       <div className="max-w-md mx-auto text-center px-6 pb-8">
-        {/* Animated logo */}
+        {/* Animated logo – large enough for gradient */}
         <motion.div
           initial={{ scale: 0, rotate: -180 }}
           animate={{ scale: 1, rotate: 0 }}
@@ -79,17 +87,16 @@ export function ClawbuisFooter() {
           className="mb-5 inline-block"
         >
           <div className="relative">
-            {/* Soft outer glow */}
             <div className="absolute -inset-6 blur-3xl opacity-20">
               <div className="w-full h-full bg-gradient-to-br from-[#2dd4bf] to-[#c29b62] rounded-full" />
             </div>
             <div className="relative h-20 w-20 flex items-center justify-center">
+              {/* Large size = use gradient, not mono */}
               <ClawbuisLogo className="h-14 w-14 drop-shadow-[0_0_15px_rgba(194,155,98,0.4)] drop-shadow-[0_0_30px_rgba(45,212,191,0.2)]" />
             </div>
           </div>
         </motion.div>
 
-        {/* Brand name - Cormorant Garamond style */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -105,7 +112,6 @@ export function ClawbuisFooter() {
           </p>
         </motion.div>
 
-        {/* Slogan */}
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -116,7 +122,6 @@ export function ClawbuisFooter() {
           &ldquo;Die Zukunft der Arbeit&rdquo;
         </motion.p>
 
-        {/* Subtle link */}
         <motion.a
           href="https://clawbuis.com"
           target="_blank"
@@ -127,7 +132,7 @@ export function ClawbuisFooter() {
           className="inline-flex items-center gap-1.5 mt-4 px-4 py-1.5 rounded-full text-[10px] border border-transparent hover:border-[#c29b62]/20 hover:bg-[#c29b62]/5 transition-all"
           style={{ color: "rgba(194,155,98,0.4)" }}
         >
-          <ClawbuisLogo className="h-3 w-3" mono />
+          <ClawbuisLogo className="h-3 w-3 text-[#c29b62]" mono />
           clawbuis.com
         </motion.a>
       </div>
