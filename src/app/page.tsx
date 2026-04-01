@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { ClawbuisBadge } from "@/components/clawbuis-badge";
+import { DashboardVisual } from "@/components/dashboard-visual";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const HF_ICONS: Record<string, any> = { ClipboardCheck, FileText, GraduationCap, Award };
@@ -211,6 +212,25 @@ export default function DashboardPage() {
             </motion.div>
           </div>
         </motion.div>
+
+        {/* Visual Overview */}
+        {(stats?.totalQuestionsAnswered ?? 0) > 0 && (
+          <motion.div variants={fadeUp}>
+            <Card className="border-border/30 bg-card/50 backdrop-blur-xl overflow-hidden">
+              <CardContent className="p-5 flex flex-col items-center">
+                <DashboardVisual
+                  hfData={(["HF1", "HF2", "HF3", "HF4"] as Handlungsfeld[]).map((hf) => {
+                    const p = getHFProgress(hf);
+                    return { hf, label: HANDLUNGSFELDER[hf].title, ...p };
+                  })}
+                  overallCorrectRate={overall.correctRate}
+                  totalMastered={overall.mastered}
+                  totalQuestions={overall.total}
+                />
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
 
         {/* Themenbereiche */}
         <motion.div variants={fadeUp}>
