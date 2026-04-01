@@ -47,6 +47,7 @@ function LernenContent() {
   const [sessionComplete, setSessionComplete] = useState(false);
   const [streak, setStreak] = useState(0);
   const [sessionStartTime] = useState(Date.now());
+  const [examTimer, setExamTimer] = useState(60 * 60); // 60 min in seconds
 
   // Parse URL params
   useEffect(() => {
@@ -154,6 +155,21 @@ function LernenContent() {
     if (sessionQuestions.length === 0) return null;
     return getQuestionById(sessionQuestions[currentIndex]);
   }, [sessionQuestions, currentIndex]);
+
+  // Exam timer – ticks every second
+  useEffect(() => {
+    if (mode !== "exam" || sessionComplete) return;
+    const interval = setInterval(() => {
+      setExamTimer((prev) => {
+        if (prev <= 1) {
+          setSessionComplete(true);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [mode, sessionComplete]);
 
   // Auth redirect
   useEffect(() => {
@@ -382,10 +398,9 @@ function LernenContent() {
 
   const progressPercent = ((currentIndex + 1) / sessionQuestions.length) * 100;
   const isExam = mode === "exam";
-  const elapsedSeconds = Math.round((Date.now() - sessionStartTime) / 1000);
-  const examTimeLeft = Math.max(0, 60 * 60 - elapsedSeconds); // 60 min exam
-  const examMinutes = Math.floor(examTimeLeft / 60);
-  const examSeconds = examTimeLeft % 60;
+  const examMinutes = Math.floor(examTimer / 60);
+  const examSeconds = examTimer % 60;
+  const examUrgent = examTimer < 300; // under 5 min
 
   return (
     <div className="min-h-screen pb-20 md:pb-6">
@@ -404,7 +419,7 @@ function LernenContent() {
                   <ClipboardCheck className="h-3 w-3" />
                   Prüfung
                 </Badge>
-                <Badge variant="outline" className="gap-1 text-xs tabular-nums">
+                <Badge variant={examUrgent ? "destructive" : "outline"} className={cn("gap-1 text-xs tabular-nums", examUrgent && "animate-pulse")}>
                   {examMinutes}:{examSeconds.toString().padStart(2, "0")}
                 </Badge>
               </>
