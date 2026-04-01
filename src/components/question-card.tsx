@@ -13,7 +13,6 @@ import {
   CheckCircle2,
   XCircle,
   HelpCircle,
-  MessageSquareText,
 } from "lucide-react";
 
 interface QuestionCardProps {
@@ -27,8 +26,6 @@ export function QuestionCard({ question, onAnswer, questionNumber, totalQuestion
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [showResult, setShowResult] = useState(false);
   const [showHint, setShowHint] = useState(false);
-  const [showExplanation, setShowExplanation] = useState(false);
-  const [hintLevel, setHintLevel] = useState(0);
   const [startTime] = useState(Date.now());
 
   const isCorrect = selectedAnswer === question.correctAnswer;
@@ -47,12 +44,22 @@ export function QuestionCard({ question, onAnswer, questionNumber, totalQuestion
     onAnswer(isCorrect, responseTime);
   }, [isCorrect, onAnswer, startTime]);
 
-  const handleHint = useCallback(() => {
-    if (hintLevel === 0) {
-      setHintLevel(1);
-      setShowHint(true);
-    }
-  }, [hintLevel]);
+  // Check if explanation/hint are generic (from auto-import)
+  const hasRealHint = question.hint && !question.hint.startsWith("Überlege, welche Antwort");
+  const hasRealExplanation = question.explanation && !question.explanation.startsWith("Die richtige Antwort ergibt sich");
+
+  // Build a useful hint from available data
+  const displayHint = hasRealHint
+    ? question.hint
+    : question.context
+      ? `Lies die Ausgangssituation nochmal genau. Es geht um: ${question.topic}.`
+      : `Themenbereich: ${question.topic}. Überlege, welche Antwort im Kontext der AEVO am sinnvollsten ist.`;
+
+  // Build explanation - show correct answer text if no real explanation
+  const correctOptionText = question.options?.[question.correctAnswer as number] ?? "";
+  const displayExplanation = hasRealExplanation
+    ? question.explanation
+    : `Die richtige Antwort ist: "${correctOptionText}"${question.tags.length > 0 ? ` (Thema: ${question.tags.join(", ")})` : ""}. Diese Frage stammt aus dem Bereich ${question.topic} im ${question.handlungsfeld}.`;
 
   return (
     <motion.div
@@ -97,9 +104,9 @@ export function QuestionCard({ question, onAnswer, questionNumber, totalQuestion
             {question.prompt}
           </h2>
 
-          {/* Hint */}
+          {/* Hint - shown BEFORE answering */}
           <AnimatePresence>
-            {showHint && (
+            {showHint && !showResult && (
               <motion.div
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: "auto" }}
@@ -108,7 +115,7 @@ export function QuestionCard({ question, onAnswer, questionNumber, totalQuestion
               >
                 <div className="flex items-start gap-2">
                   <Lightbulb className="h-4 w-4 text-warning mt-0.5 shrink-0" />
-                  <p className="text-sm text-warning-foreground">{question.hint}</p>
+                  <p className="text-sm text-foreground/80">{displayHint}</p>
                 </div>
               </motion.div>
             )}
@@ -165,7 +172,7 @@ export function QuestionCard({ question, onAnswer, questionNumber, totalQuestion
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={handleHint}
+                onClick={() => setShowHint(true)}
                 disabled={showHint}
                 className="text-warning hover:text-warning"
               >
@@ -175,43 +182,47 @@ export function QuestionCard({ question, onAnswer, questionNumber, totalQuestion
             )}
 
             {showResult && (
-              <>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowExplanation(!showExplanation)}
-                >
-                  <MessageSquareText className="mr-1.5 h-4 w-4" />
-                  {showExplanation ? "Erklärung ausblenden" : "Erklärung anzeigen"}
-                </Button>
+              <div className="flex-1" />
+            )}
 
-                <div className="flex-1" />
-
-                <Button onClick={handleNext} className="rounded-xl">
-                  Weiter
-                  <ChevronRight className="ml-1.5 h-4 w-4" />
-                </Button>
-              </>
+            {showResult && (
+              <Button onClick={handleNext} className="rounded-xl ml-auto">
+                Weiter
+                <ChevronRight className="ml-1.5 h-4 w-4" />
+              </Button>
             )}
           </div>
 
-          {/* Explanation */}
+          {/* Explanation - shown AUTOMATICALLY after answering */}
           <AnimatePresence>
-            {showExplanation && (
+            {showResult && (
               <motion.div
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: "auto" }}
                 exit={{ opacity: 0, height: 0 }}
-                className="rounded-xl bg-primary/5 border border-primary/10 p-4"
+                transition={{ delay: 0.3 }}
+                className={cn(
+                  "rounded-xl border p-4",
+                  isCorrect ? "bg-success/5 border-success/20" : "bg-primary/5 border-primary/10"
+                )}
               >
                 <div className="flex items-start gap-3">
-                  <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                    <Lightbulb className="h-4 w-4 text-primary" />
+                  <div className={cn(
+                    "h-8 w-8 rounded-lg flex items-center justify-center shrink-0",
+                    isCorrect ? "bg-success/10" : "bg-primary/10"
+                  )}>
+                    {isCorrect ? (
+                      <CheckCircle2 className="h-4 w-4 text-success" />
+                    ) : (
+                      <Lightbulb className="h-4 w-4 text-primary" />
+                    )}
                   </div>
                   <div>
-                    <p className="text-sm font-medium mb-1">Erklärung</p>
+                    <p className="text-sm font-medium mb-1">
+                      {isCorrect ? "Richtig!" : "Erklärung"}
+                    </p>
                     <p className="text-sm text-muted-foreground leading-relaxed">
-                      {question.explanation}
+                      {displayExplanation}
                     </p>
                     {question.tags.length > 0 && (
                       <div className="flex flex-wrap gap-1.5 mt-3">
