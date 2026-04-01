@@ -102,13 +102,26 @@ export default function DashboardPage() {
               ))}
             </div>
 
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.9 }}>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.9 }} className="space-y-3">
               <Link href="/lernen">
                 <Button size="lg" className="w-full h-14 rounded-2xl text-base font-semibold shadow-lg shadow-primary/20">
                   <Sparkles className="mr-2 h-5 w-5" />
                   Erste Frage beantworten
                 </Button>
               </Link>
+
+              {user.uid === "guest-user" && (
+                <div className="rounded-xl bg-warning/10 border border-warning/20 p-3 text-center">
+                  <p className="text-xs text-foreground/80">
+                    ⚠️ Du bist ohne Anmeldung unterwegs. Dein Fortschritt wird <strong>nur auf diesem Gerät</strong> gespeichert und kann verloren gehen.
+                  </p>
+                  <Link href="/login">
+                    <Button variant="outline" size="sm" className="mt-2 text-xs rounded-lg h-7">
+                      Jetzt Konto erstellen & Fortschritt sichern
+                    </Button>
+                  </Link>
+                </div>
+              )}
             </motion.div>
           </motion.div>
         </main>
@@ -265,6 +278,23 @@ export default function DashboardPage() {
             </Link>
           </div>
         </motion.div>
+
+        {/* Gast-Hinweis */}
+        {user.uid === "guest-user" && (
+          <motion.div variants={fadeUp}>
+            <div className="rounded-xl bg-warning/5 border border-warning/15 p-3 flex items-center gap-3">
+              <span className="text-lg shrink-0">⚠️</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-foreground/70">Dein Fortschritt ist <strong>nur auf diesem Gerät</strong> gespeichert.</p>
+              </div>
+              <Link href="/login">
+                <Button variant="outline" size="sm" className="text-[10px] rounded-lg h-7 px-2.5 shrink-0">
+                  Konto erstellen
+                </Button>
+              </Link>
+            </div>
+          </motion.div>
+        )}
 
         <motion.div variants={fadeUp} className="flex justify-center pt-2 pb-2">
           <ClawbuisBadge />
