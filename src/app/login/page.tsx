@@ -70,10 +70,11 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Background gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-background" />
-      <div className="absolute top-1/4 -left-32 w-96 h-96 rounded-full bg-primary/5 blur-3xl" />
-      <div className="absolute bottom-1/4 -right-32 w-96 h-96 rounded-full bg-xp/5 blur-3xl" />
+      {/* Layered gradient background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/8 via-background to-background" />
+      <div className="absolute top-1/4 -left-32 w-[500px] h-[500px] rounded-full bg-primary/8 blur-[100px] animate-pulse" />
+      <div className="absolute bottom-1/4 -right-32 w-[400px] h-[400px] rounded-full bg-xp/6 blur-[80px]" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-sage/3 blur-[120px]" />
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -91,13 +92,13 @@ export default function LoginPage() {
           >
             <GraduationCap className="h-8 w-8 text-primary" />
           </motion.div>
-          <h1 className="text-2xl font-bold tracking-tight">AEVO Meisterkurs</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-gradient">AEVO Meisterkurs</h1>
           <p className="text-muted-foreground text-sm mt-1">
             Teil IV – Berufs- und Arbeitspädagogik
           </p>
         </div>
 
-        <Card className="border-border/50 bg-card/80 backdrop-blur-sm">
+        <Card className="border-border/30 bg-card/60 backdrop-blur-xl shadow-2xl shadow-primary/5">
           <CardHeader className="pb-4">
             <CardTitle className="text-lg">Willkommen</CardTitle>
             <CardDescription>Melde dich an oder erstelle einen Account</CardDescription>

@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { HANDLUNGSFELDER, LEVELS, type Handlungsfeld } from "@/lib/types";
+import { AnimatedCounter } from "@/components/animated-counter";
 import {
   BookOpen,
   Flame,
@@ -29,7 +30,8 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
-const HF_ICONS: Record<string, React.ElementType> = {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const HF_ICONS: Record<string, any> = {
   ClipboardCheck,
   FileText,
   GraduationCap,
@@ -95,7 +97,7 @@ export default function DashboardPage() {
       >
         {/* Hero Section */}
         <motion.div variants={item}>
-          <Card className="border-border/50 bg-gradient-to-br from-card via-card to-primary/5 overflow-hidden relative">
+          <Card className="border-border/30 bg-card/60 backdrop-blur-xl overflow-hidden relative shadow-xl shadow-primary/5">
             <CardContent className="p-6 flex flex-col md:flex-row items-center gap-6">
               <ProgressRing progress={dailyPercent} size={130} strokeWidth={10}>
                 <div className="text-center">
@@ -117,19 +119,19 @@ export default function DashboardPage() {
 
                 <div className="flex items-center gap-4 mt-4 justify-center md:justify-start">
                   <div className="flex items-center gap-1.5 text-sm">
-                    <Flame className="h-4 w-4 text-orange-500" />
-                    <span className="font-medium">{stats?.currentStreak ?? 0}</span>
+                    <Flame className="h-4 w-4 text-orange-500 drop-shadow-[0_0_6px_rgba(249,115,22,0.5)]" />
+                    <AnimatedCounter value={stats?.currentStreak ?? 0} className="font-medium" />
                     <span className="text-muted-foreground text-xs">Tage</span>
                   </div>
                   <div className="flex items-center gap-1.5 text-sm">
-                    <Trophy className="h-4 w-4 text-xp" />
-                    <span className="font-medium">{stats?.xp ?? 0}</span>
+                    <Trophy className="h-4 w-4 text-xp drop-shadow-[0_0_6px_var(--xp)]" />
+                    <AnimatedCounter value={stats?.xp ?? 0} className="font-medium" />
                     <span className="text-muted-foreground text-xs">XP</span>
                   </div>
                   <div className="flex items-center gap-1.5 text-sm">
-                    <Target className="h-4 w-4 text-primary" />
-                    <span className="font-medium">{Math.round(overall.correctRate * 100)}%</span>
-                    <span className="text-muted-foreground text-xs">Richtig</span>
+                    <Target className="h-4 w-4 text-primary drop-shadow-[0_0_6px_var(--primary)]" />
+                    <AnimatedCounter value={Math.round(overall.correctRate * 100)} className="font-medium" />
+                    <span className="text-muted-foreground text-xs">% Richtig</span>
                   </div>
                 </div>
 
@@ -189,7 +191,7 @@ export default function DashboardPage() {
               return (
                 <motion.div key={hf} variants={item}>
                   <Link href={`/lernen?hf=${hf}`}>
-                    <Card className="border-border/50 hover:border-primary/30 transition-all hover:shadow-lg hover:shadow-primary/5 group cursor-pointer">
+                    <Card className="border-border/30 bg-card/50 backdrop-blur-lg hover:border-primary/40 transition-all duration-300 hover:shadow-xl hover:shadow-primary/10 hover:-translate-y-0.5 group cursor-pointer">
                       <CardContent className="p-5">
                         <div className="flex items-start justify-between mb-3">
                           <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">

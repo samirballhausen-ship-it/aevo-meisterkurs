@@ -63,9 +63,10 @@ export function QuestionCard({ question, onAnswer, questionNumber, totalQuestion
     >
       <Card
         className={cn(
-          "border-border/50 transition-shadow duration-500",
-          showResult && isCorrect && "glow-success border-success/30",
-          showResult && !isCorrect && "glow-error border-destructive/30"
+          "border-border/30 bg-card/50 backdrop-blur-xl transition-all duration-500",
+          showResult && isCorrect && "glow-success border-success/40",
+          showResult && !isCorrect && "glow-error border-destructive/40",
+          !showResult && "shadow-lg shadow-primary/5"
         )}
       >
         <CardContent className="p-5 md:p-6 space-y-5">
