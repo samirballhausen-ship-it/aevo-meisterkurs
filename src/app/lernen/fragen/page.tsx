@@ -200,28 +200,46 @@ function FragenContent() {
                                 </div>
                               )}
 
-                              {/* Options */}
-                              <div className="space-y-1.5">
-                                {q.options?.map((opt, i) => (
-                                  <div
-                                    key={i}
-                                    className={`flex items-start gap-2 text-xs p-2 rounded-lg ${
-                                      i === q.correctAnswer
-                                        ? "bg-success/10 border border-success/20"
-                                        : "bg-muted/20"
-                                    }`}
-                                  >
-                                    <span className={`shrink-0 h-5 w-5 rounded-full flex items-center justify-center text-[10px] font-medium ${
-                                      i === q.correctAnswer
-                                        ? "bg-success text-success-foreground"
-                                        : "bg-muted text-muted-foreground"
-                                    }`}>
-                                      {i === q.correctAnswer ? <CheckCircle2 className="h-3 w-3" /> : String.fromCharCode(65 + i)}
-                                    </span>
-                                    <span className="flex-1 leading-relaxed">{opt}</span>
+                              {/* Options (MC) or Solution (Open) */}
+                              {q.type === "open" ? (
+                                <div className="space-y-2">
+                                  <div className="rounded-lg bg-primary/5 border border-primary/20 p-3">
+                                    <p className="text-[10px] font-medium text-primary mb-1.5">Musterantwort</p>
+                                    <p className="text-xs text-muted-foreground leading-relaxed whitespace-pre-line">
+                                      {q.solution || q.explanation}
+                                    </p>
                                   </div>
-                                ))}
-                              </div>
+                                  {q.solutionPoints && q.solutionPoints.length > 0 && (
+                                    <div className="flex flex-wrap gap-1">
+                                      {q.solutionPoints.map((pt) => (
+                                        <Badge key={pt} variant="secondary" className="text-[9px]">{pt}</Badge>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              ) : (
+                                <div className="space-y-1.5">
+                                  {q.options?.map((opt, i) => (
+                                    <div
+                                      key={i}
+                                      className={`flex items-start gap-2 text-xs p-2 rounded-lg ${
+                                        i === q.correctAnswer
+                                          ? "bg-success/10 border border-success/20"
+                                          : "bg-muted/20"
+                                      }`}
+                                    >
+                                      <span className={`shrink-0 h-5 w-5 rounded-full flex items-center justify-center text-[10px] font-medium ${
+                                        i === q.correctAnswer
+                                          ? "bg-success text-success-foreground"
+                                          : "bg-muted text-muted-foreground"
+                                      }`}>
+                                        {i === q.correctAnswer ? <CheckCircle2 className="h-3 w-3" /> : String.fromCharCode(65 + i)}
+                                      </span>
+                                      <span className="flex-1 leading-relaxed">{opt}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
 
                               {/* Explanation */}
                               <div className="rounded-lg bg-primary/5 border border-primary/10 p-2.5">

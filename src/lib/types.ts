@@ -18,6 +18,9 @@ export interface Question {
   explanation: string;
   hint: string;
   tags: string[];
+  // Open question fields
+  solution?: string;
+  solutionPoints?: string[];
 }
 
 export const HANDLUNGSFELDER: Record<Handlungsfeld, { title: string; subtitle: string; icon: string }> = {

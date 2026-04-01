@@ -108,13 +108,13 @@ function LernenContent() {
     setMode(sessionMode);
   }, [getDueQuestions, getNewQuestions, getWeakQuestions]);
 
-  const handleAnswer = useCallback(async (correct: boolean, responseTime: number) => {
+  const handleAnswer = useCallback(async (correct: boolean, responseTime: number, partial?: boolean) => {
     const questionId = sessionQuestions[currentIndex];
     await recordAnswer(questionId, correct, responseTime);
 
-    // XP calculation
-    let xp = correct ? 10 : 2;
-    if (correct && responseTime < 10) xp += 3; // Speed bonus
+    // XP calculation – partial answers get half XP
+    let xp = correct ? (partial ? 5 : 10) : 2;
+    if (correct && !partial && responseTime < 10) xp += 3; // Speed bonus
     if (correct) {
       const newStreak = streak + 1;
       setStreak(newStreak);
