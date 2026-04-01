@@ -1,6 +1,8 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from "react";
+import { doc, getDoc, setDoc } from "firebase/firestore";
+import { db } from "./firebase";
 import { useAuth } from "./auth-context";
 import type { QuestionProgress, LeitnerBox, Handlungsfeld } from "./types";
 import { LEITNER_INTERVALS } from "./types";
@@ -34,32 +36,29 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
     }
 
     if (isGuest) {
-      // Guest: load from localStorage
       try {
         const stored = localStorage.getItem("lernapp-progress");
         if (stored) {
-          const data = JSON.parse(stored) as Record<string, QuestionProgress>;
-          setProgress(new Map(Object.entries(data)));
+          setProgress(new Map(Object.entries(JSON.parse(stored))));
         }
       } catch { /* ignore */ }
       setLoading(false);
       return;
     }
 
-    // Firebase user
-    loadProgress();
+    // Firebase user: load from Firestore
     async function loadProgress() {
       try {
-        const { doc, getDoc } = await import("firebase/firestore");
-        const { db } = await import("./firebase");
         const snap = await getDoc(doc(db, "progress", user!.uid));
         if (snap.exists()) {
-          const data = snap.data() as Record<string, QuestionProgress>;
-          setProgress(new Map(Object.entries(data)));
+          setProgress(new Map(Object.entries(snap.data() as Record<string, QuestionProgress>)));
         }
-      } catch { /* Firebase not configured */ }
+      } catch (err) {
+        console.error("Failed to load progress:", err);
+      }
       setLoading(false);
     }
+    loadProgress();
   }, [user, isGuest]);
 
   const saveProgress = useCallback(async (newProgress: Map<string, QuestionProgress>) => {
@@ -68,14 +67,13 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
 
     if (isGuest) {
       localStorage.setItem("lernapp-progress", JSON.stringify(obj));
-      return;
+    } else {
+      try {
+        await setDoc(doc(db, "progress", user.uid), obj);
+      } catch (err) {
+        console.error("Failed to save progress:", err);
+      }
     }
-
-    try {
-      const { doc, setDoc } = await import("firebase/firestore");
-      const { db } = await import("./firebase");
-      await setDoc(doc(db, "progress", user.uid), obj);
-    } catch { /* Firebase not configured */ }
   }, [user, isGuest]);
 
   const recordAnswer = useCallback(async (questionId: string, correct: boolean, responseTime: number) => {
@@ -119,11 +117,7 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
         const p = progress.get(q.id);
         return p && p.nextReview <= now && p.box < 5;
       })
-      .sort((a, b) => {
-        const pa = progress.get(a.id)!;
-        const pb = progress.get(b.id)!;
-        return pa.nextReview - pb.nextReview;
-      })
+      .sort((a, b) => progress.get(a.id)!.nextReview - progress.get(b.id)!.nextReview)
       .map((q) => q.id);
   }, [progress]);
 
@@ -150,10 +144,7 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
   const getHFProgress = useCallback((hf: Handlungsfeld) => {
     const hfQuestions = questions.filter((q) => q.handlungsfeld === hf);
     const total = hfQuestions.length;
-    let mastered = 0;
-    let inProgress = 0;
-    let correctTotal = 0;
-    let answeredTotal = 0;
+    let mastered = 0, inProgress = 0, correctTotal = 0, answeredTotal = 0;
 
     for (const q of hfQuestions) {
       const p = progress.get(q.id);
@@ -176,9 +167,7 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
 
   const getOverallProgress = useCallback(() => {
     const total = questions.length;
-    let mastered = 0;
-    let correctTotal = 0;
-    let answeredTotal = 0;
+    let mastered = 0, correctTotal = 0, answeredTotal = 0;
 
     for (const [, p] of progress) {
       if (p.box >= 5) mastered++;
@@ -195,16 +184,7 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
 
   return (
     <ProgressContext.Provider
-      value={{
-        progress,
-        loading,
-        recordAnswer,
-        getDueQuestions,
-        getNewQuestions,
-        getWeakQuestions,
-        getHFProgress,
-        getOverallProgress,
-      }}
+      value={{ progress, loading, recordAnswer, getDueQuestions, getNewQuestions, getWeakQuestions, getHFProgress, getOverallProgress }}
     >
       {children}
     </ProgressContext.Provider>

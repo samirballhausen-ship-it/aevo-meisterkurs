@@ -1,9 +1,17 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import {
+  onAuthStateChanged,
+  signInWithPopup,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut as firebaseSignOut,
+  updateProfile,
+} from "firebase/auth";
+import { doc, setDoc, getDoc } from "firebase/firestore";
+import { auth, db, googleProvider } from "./firebase";
 import type { AppUser, UserStats } from "./types";
-
-const IS_FIREBASE_CONFIGURED = Boolean(process.env.NEXT_PUBLIC_FIREBASE_API_KEY);
 
 interface AuthContextValue {
   user: AppUser | null;
@@ -18,28 +26,6 @@ interface AuthContextValue {
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
-
-const DEFAULT_STATS: UserStats = {
-  totalPoints: 0,
-  currentStreak: 3,
-  longestStreak: 7,
-  level: 2,
-  xp: 850,
-  dailyGoalTarget: 20,
-  dailyGoalProgress: 12,
-  lastActiveDate: new Date().toISOString().split("T")[0],
-  achievements: ["first-step", "weekend-warrior"],
-  totalQuestionsAnswered: 47,
-  totalCorrect: 38,
-  totalTimeSpent: 2340,
-};
-
-const GUEST_USER: AppUser = {
-  uid: "guest-user",
-  email: null,
-  displayName: "Gast",
-  photoURL: null,
-};
 
 const FRESH_STATS: UserStats = {
   totalPoints: 0,
@@ -56,205 +42,152 @@ const FRESH_STATS: UserStats = {
   totalTimeSpent: 0,
 };
 
-// ─── Local Storage Provider (no Firebase) ──────────────────────────────────
+const GUEST_USER: AppUser = {
+  uid: "guest-user",
+  email: null,
+  displayName: "Gast",
+  photoURL: null,
+};
 
-function LocalAuthProvider({ children }: { children: ReactNode }) {
+export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AppUser | null>(null);
   const [stats, setStats] = useState<UserStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isGuest, setIsGuest] = useState(false);
 
   useEffect(() => {
-    const stored = localStorage.getItem("lernapp-user");
-    if (stored) {
-      setUser(JSON.parse(stored));
-      const s = localStorage.getItem("lernapp-stats");
-      setStats(s ? JSON.parse(s) : FRESH_STATS);
-    }
-    setLoading(false);
-  }, []);
-
-  function getStoredStats(): UserStats {
-    try {
-      const s = localStorage.getItem("lernapp-stats");
-      return s ? JSON.parse(s) : FRESH_STATS;
-    } catch { return FRESH_STATS; }
-  }
-
-  function loginUser(u: AppUser, s: UserStats) {
-    setUser(u);
-    setStats(s);
-    localStorage.setItem("lernapp-user", JSON.stringify(u));
-    localStorage.setItem("lernapp-stats", JSON.stringify(s));
-  }
-
-  async function signInWithGoogle() {
-    const u: AppUser = { uid: "local-google", email: "samir@meisterkurs.de", displayName: "Samir", photoURL: null };
-    loginUser(u, getStoredStats());
-  }
-
-  async function signInWithEmail(email: string, _password: string) {
-    const u: AppUser = { uid: "local-email", email, displayName: email.split("@")[0], photoURL: null };
-    loginUser(u, getStoredStats());
-  }
-
-  async function signUpWithEmail(email: string, _password: string, name: string) {
-    const u: AppUser = { uid: "local-email", email, displayName: name, photoURL: null };
-    loginUser(u, FRESH_STATS);
-  }
-
-  async function signInAsGuest() {
-    loginUser(GUEST_USER, getStoredStats());
-  }
-
-  async function signOut() {
-    setUser(null);
-    setStats(null);
-    localStorage.removeItem("lernapp-user");
-    localStorage.removeItem("lernapp-stats");
-  }
-
-  async function updateStats(updates: Partial<UserStats>) {
-    const newStats = { ...stats, ...updates } as UserStats;
-    setStats(newStats);
-    localStorage.setItem("lernapp-stats", JSON.stringify(newStats));
-  }
-
-  return (
-    <AuthContext.Provider
-      value={{ user, stats, loading, signInWithGoogle, signInWithEmail, signUpWithEmail, signInAsGuest, signOut, updateStats }}
-    >
-      {children}
-    </AuthContext.Provider>
-  );
-}
-
-// ─── Firebase Provider ─────────────────────────────────────────────────────
-
-function FirebaseAuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<AppUser | null>(null);
-  const [stats, setStats] = useState<UserStats | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // Check for guest user first
-    const guestData = localStorage.getItem("lernapp-guest");
-    if (guestData) {
+    // Check for guest session first
+    if (typeof window !== "undefined" && localStorage.getItem("lernapp-guest")) {
       setUser(GUEST_USER);
-      const s = localStorage.getItem("lernapp-stats");
-      setStats(s ? JSON.parse(s) : FRESH_STATS);
+      setIsGuest(true);
+      try {
+        const s = localStorage.getItem("lernapp-stats");
+        setStats(s ? JSON.parse(s) : FRESH_STATS);
+      } catch {
+        setStats(FRESH_STATS);
+      }
       setLoading(false);
       return;
     }
 
-    let unsubscribe: (() => void) | undefined;
+    // Firebase auth listener
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        setUser({
+          uid: firebaseUser.uid,
+          email: firebaseUser.email,
+          displayName: firebaseUser.displayName,
+          photoURL: firebaseUser.photoURL,
+        });
+        setIsGuest(false);
 
-    async function init() {
-      const { onAuthStateChanged } = await import("firebase/auth");
-      const { auth } = await import("./firebase");
-      const { doc, getDoc, setDoc } = await import("firebase/firestore");
-      const { db } = await import("./firebase");
-
-      unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-        if (firebaseUser) {
-          setUser({
-            uid: firebaseUser.uid,
-            email: firebaseUser.email,
-            displayName: firebaseUser.displayName,
-            photoURL: firebaseUser.photoURL,
-          });
+        // Load or create user stats in Firestore
+        try {
           const statsDoc = await getDoc(doc(db, "users", firebaseUser.uid));
           if (statsDoc.exists()) {
             setStats(statsDoc.data() as UserStats);
           } else {
-            const defaultStats: UserStats = { ...FRESH_STATS };
-            await setDoc(doc(db, "users", firebaseUser.uid), defaultStats);
-            setStats(defaultStats);
+            await setDoc(doc(db, "users", firebaseUser.uid), FRESH_STATS);
+            setStats(FRESH_STATS);
           }
-        } else {
+        } catch (err) {
+          console.error("Firestore error:", err);
+          setStats(FRESH_STATS);
+        }
+      } else {
+        if (!localStorage.getItem("lernapp-guest")) {
           setUser(null);
           setStats(null);
         }
-        setLoading(false);
-      });
-    }
+      }
+      setLoading(false);
+    });
 
-    init();
-    return () => unsubscribe?.();
+    return () => unsubscribe();
   }, []);
 
-  async function signInWithGoogle() {
-    const { signInWithPopup } = await import("firebase/auth");
-    const { auth, googleProvider } = await import("./firebase");
-    await signInWithPopup(auth, googleProvider);
+  // ─── Real Google Auth ──────────────────────────────────────────────────────
+  async function handleSignInWithGoogle() {
+    const result = await signInWithPopup(auth, googleProvider);
+
+    // Initialize progress if new user
+    const progressRef = doc(db, "users", result.user.uid);
+    const existing = await getDoc(progressRef);
+    if (!existing.exists()) {
+      await setDoc(progressRef, FRESH_STATS);
+    }
   }
 
-  async function signInWithEmail(email: string, password: string) {
-    const { signInWithEmailAndPassword } = await import("firebase/auth");
-    const { auth } = await import("./firebase");
+  // ─── Real Email Auth ───────────────────────────────────────────────────────
+  async function handleSignInWithEmail(email: string, password: string) {
     await signInWithEmailAndPassword(auth, email, password);
   }
 
-  async function signUpWithEmail(email: string, password: string, name: string) {
-    const { createUserWithEmailAndPassword, updateProfile } = await import("firebase/auth");
-    const { auth } = await import("./firebase");
+  async function handleSignUpWithEmail(email: string, password: string, name: string) {
     const result = await createUserWithEmailAndPassword(auth, email, password);
     await updateProfile(result.user, { displayName: name });
+    await setDoc(doc(db, "users", result.user.uid), FRESH_STATS);
   }
 
-  async function signInAsGuest() {
+  // ─── Guest Mode (localStorage only) ───────────────────────────────────────
+  async function handleSignInAsGuest() {
     localStorage.setItem("lernapp-guest", "true");
     localStorage.setItem("lernapp-stats", JSON.stringify(FRESH_STATS));
     setUser(GUEST_USER);
     setStats(FRESH_STATS);
+    setIsGuest(true);
     setLoading(false);
   }
 
-  async function signOut() {
-    // Clear guest mode
-    localStorage.removeItem("lernapp-guest");
-    localStorage.removeItem("lernapp-stats");
-    // Also sign out Firebase if active
+  // ─── Sign Out ──────────────────────────────────────────────────────────────
+  async function handleSignOut() {
+    if (isGuest) {
+      localStorage.removeItem("lernapp-guest");
+      localStorage.removeItem("lernapp-stats");
+      localStorage.removeItem("lernapp-progress");
+    }
     try {
-      const { signOut: firebaseSignOut } = await import("firebase/auth");
-      const { auth } = await import("./firebase");
       await firebaseSignOut(auth);
-    } catch { /* guest mode, no firebase auth active */ }
+    } catch { /* guest mode */ }
     setUser(null);
     setStats(null);
+    setIsGuest(false);
   }
 
-  async function updateStats(updates: Partial<UserStats>) {
+  // ─── Update Stats ─────────────────────────────────────────────────────────
+  async function handleUpdateStats(updates: Partial<UserStats>) {
     if (!user) return;
     const newStats = { ...stats, ...updates } as UserStats;
     setStats(newStats);
 
-    if (user.uid === "guest-user") {
-      // Guest: save to localStorage only
+    if (isGuest) {
       localStorage.setItem("lernapp-stats", JSON.stringify(newStats));
     } else {
-      // Firebase user: save to Firestore
-      const { doc, setDoc } = await import("firebase/firestore");
-      const { db } = await import("./firebase");
-      await setDoc(doc(db, "users", user.uid), newStats);
+      try {
+        await setDoc(doc(db, "users", user.uid), newStats);
+      } catch (err) {
+        console.error("Failed to save stats:", err);
+      }
     }
   }
 
   return (
     <AuthContext.Provider
-      value={{ user, stats, loading, signInWithGoogle, signInWithEmail, signUpWithEmail, signInAsGuest, signOut, updateStats }}
+      value={{
+        user,
+        stats,
+        loading,
+        signInWithGoogle: handleSignInWithGoogle,
+        signInWithEmail: handleSignInWithEmail,
+        signUpWithEmail: handleSignUpWithEmail,
+        signInAsGuest: handleSignInAsGuest,
+        signOut: handleSignOut,
+        updateStats: handleUpdateStats,
+      }}
     >
       {children}
     </AuthContext.Provider>
   );
-}
-
-// ─── Auto-Select Provider ──────────────────────────────────────────────────
-
-export function AuthProvider({ children }: { children: ReactNode }) {
-  if (IS_FIREBASE_CONFIGURED) {
-    return <FirebaseAuthProvider>{children}</FirebaseAuthProvider>;
-  }
-  return <LocalAuthProvider>{children}</LocalAuthProvider>;
 }
 
 export function useAuth() {
