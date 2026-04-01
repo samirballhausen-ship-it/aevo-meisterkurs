@@ -79,12 +79,16 @@ export function ClawbuisFooter() {
           className="mb-5 inline-block"
         >
           <div className="relative">
-            {/* Glow behind logo */}
-            <div className="absolute inset-0 blur-2xl opacity-30">
+            {/* Outer glow ring */}
+            <div className="absolute -inset-4 blur-3xl opacity-40">
               <div className="w-full h-full bg-gradient-to-br from-[#2dd4bf] to-[#c29b62] rounded-full" />
             </div>
-            <div className="relative h-16 w-16 flex items-center justify-center">
-              <ClawbuisLogo className="h-12 w-12 drop-shadow-[0_0_12px_rgba(194,155,98,0.4)]" />
+            {/* Inner glow */}
+            <div className="absolute -inset-2 blur-xl opacity-25">
+              <div className="w-full h-full bg-[#ffd700] rounded-full" />
+            </div>
+            <div className="relative h-20 w-20 flex items-center justify-center">
+              <ClawbuisLogo className="h-14 w-14 drop-shadow-[0_0_20px_rgba(194,155,98,0.6)] drop-shadow-[0_0_40px_rgba(45,212,191,0.3)]" />
             </div>
           </div>
         </motion.div>
