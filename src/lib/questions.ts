@@ -1,9 +1,6 @@
 import type { Question, Handlungsfeld } from "./types";
 
-// Imported questions will be added here once generated
-// To import: add `import { importedQuestions } from "./questions-imported"`
-// and include them in the merge below
-const importedQuestions: Question[] = [];
+import { importedQuestions } from "./questions-imported";
 
 const baseQuestions: Question[] = [
   // ═══════════════════════════════════════════════════════════════════════════

@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BookOpen, GraduationCap, Sparkles, UserCircle } from "lucide-react";
+import { ClawbuisBadge } from "@/components/clawbuis-badge";
 
 export default function LoginPage() {
   const { signInWithGoogle, signInWithEmail, signUpWithEmail, signInAsGuest } = useAuth();
@@ -243,9 +244,12 @@ export default function LoginPage() {
           </CardContent>
         </Card>
 
-        <p className="text-center text-xs text-muted-foreground mt-4">
-          Meisterschule Teil IV – Berufs- und Arbeitspädagogik (AEVO)
-        </p>
+        <div className="flex flex-col items-center gap-3 mt-6">
+          <p className="text-xs text-muted-foreground">
+            Meisterschule Teil IV – Berufs- und Arbeitspädagogik (AEVO)
+          </p>
+          <ClawbuisBadge />
+        </div>
       </motion.div>
     </div>
   );
