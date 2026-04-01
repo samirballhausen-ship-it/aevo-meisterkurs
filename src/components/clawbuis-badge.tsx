@@ -22,15 +22,15 @@ export function ClawbuisLogo({ className, mono }: { className?: string; mono?: b
         </defs>
       )}
       <g fill="none" stroke={mono ? "currentColor" : "url(#clawGrad)"} strokeLinecap="round">
-        <path d="M 20 52 C 16 44, 9 34, 7 24 C 5 16, 7 10, 11 10" strokeWidth="2.2" />
-        <path d="M 23 46 C 21 36, 18 22, 19 12 C 20 6, 22 2, 25 4" strokeWidth="2.4" />
-        <path d="M 30 44 C 29 32, 30 18, 32 6 C 33 1, 35 0, 36 3" strokeWidth="2.6" />
-        <path d="M 38 46 C 40 36, 43 22, 44 12 C 45 6, 43 2, 40 4" strokeWidth="2.4" />
-        <path d="M 44 52 C 48 44, 55 34, 57 24 C 59 16, 57 12, 53 12" strokeWidth="2" />
+        <path d="M 20 52 C 16 44, 9 34, 7 24 C 5 16, 7 10, 11 10" strokeWidth="3" />
+        <path d="M 23 46 C 21 36, 18 22, 19 12 C 20 6, 22 2, 25 4" strokeWidth="3.2" />
+        <path d="M 30 44 C 29 32, 30 18, 32 6 C 33 1, 35 0, 36 3" strokeWidth="3.5" />
+        <path d="M 38 46 C 40 36, 43 22, 44 12 C 45 6, 43 2, 40 4" strokeWidth="3.2" />
+        <path d="M 44 52 C 48 44, 55 34, 57 24 C 59 16, 57 12, 53 12" strokeWidth="3" />
       </g>
-      <path d="M 18 54 C 20 60, 26 64, 32 64 C 38 64, 44 60, 46 54" fill="none" stroke="#c29b62" strokeWidth="1.5" strokeLinecap="round" opacity="0.4" />
-      <circle cx="32" cy="50" r="2.8" fill="#ffd700" opacity="0.85" />
-      <circle cx="32" cy="50" r="1.2" fill="#fffde8" opacity="0.9" />
+      <path d="M 18 54 C 20 60, 26 64, 32 64 C 38 64, 44 60, 46 54" fill="none" stroke="#c29b62" strokeWidth="2" strokeLinecap="round" opacity="0.5" />
+      <circle cx="32" cy="50" r="3.5" fill="#ffd700" opacity="0.7" />
+      <circle cx="32" cy="50" r="1.5" fill="#fffde8" opacity="0.85" />
     </svg>
   );
 }
@@ -79,16 +79,12 @@ export function ClawbuisFooter() {
           className="mb-5 inline-block"
         >
           <div className="relative">
-            {/* Outer glow ring */}
-            <div className="absolute -inset-4 blur-3xl opacity-40">
+            {/* Soft outer glow */}
+            <div className="absolute -inset-6 blur-3xl opacity-20">
               <div className="w-full h-full bg-gradient-to-br from-[#2dd4bf] to-[#c29b62] rounded-full" />
             </div>
-            {/* Inner glow */}
-            <div className="absolute -inset-2 blur-xl opacity-25">
-              <div className="w-full h-full bg-[#ffd700] rounded-full" />
-            </div>
             <div className="relative h-20 w-20 flex items-center justify-center">
-              <ClawbuisLogo className="h-14 w-14 drop-shadow-[0_0_20px_rgba(194,155,98,0.6)] drop-shadow-[0_0_40px_rgba(45,212,191,0.3)]" />
+              <ClawbuisLogo className="h-14 w-14 drop-shadow-[0_0_15px_rgba(194,155,98,0.4)] drop-shadow-[0_0_30px_rgba(45,212,191,0.2)]" />
             </div>
           </div>
         </motion.div>
