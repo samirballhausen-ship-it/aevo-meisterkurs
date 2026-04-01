@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
+import { BookOpen as BookOpenIcon } from "lucide-react";
 
 function LernenContent() {
   const searchParams = useSearchParams();
@@ -220,14 +221,29 @@ function LernenContent() {
                   <Card
                     key={hf}
                     className="border-border/50 hover:border-primary/30 transition-all cursor-pointer"
-                    onClick={() => {
-                      setSelectedHF(hf);
-                      startSession("handlungsfeld", hf);
-                    }}
                   >
-                    <CardContent className="p-4 text-center">
-                      <Badge variant="outline" className="mb-2">{hf}</Badge>
+                    <CardContent className="p-4 text-center space-y-2">
+                      <Badge variant="outline" className="mb-1">{hf}</Badge>
                       <p className="text-xs font-medium">{info.title}</p>
+                      <div className="flex gap-1.5 justify-center pt-1">
+                        <Button
+                          size="sm"
+                          className="text-[10px] h-7 px-2.5 rounded-lg"
+                          onClick={() => {
+                            setSelectedHF(hf);
+                            startSession("handlungsfeld", hf);
+                          }}
+                        >
+                          <Zap className="mr-1 h-3 w-3" />
+                          Üben
+                        </Button>
+                        <Link href={`/lernen/fragen?hf=${hf}`}>
+                          <Button variant="outline" size="sm" className="text-[10px] h-7 px-2.5 rounded-lg">
+                            <BookOpen className="mr-1 h-3 w-3" />
+                            Fragen
+                          </Button>
+                        </Link>
+                      </div>
                     </CardContent>
                   </Card>
                 )
