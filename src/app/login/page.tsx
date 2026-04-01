@@ -48,8 +48,19 @@ export default function LoginPage() {
       setError("");
       await signInWithEmail(email, password);
       router.push("/");
-    } catch {
-      setError("Login fehlgeschlagen. E-Mail oder Passwort falsch.");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (msg.includes("user-not-found") || msg.includes("invalid-credential")) {
+        setError("Kein Account mit dieser E-Mail gefunden. Bitte zuerst registrieren.");
+      } else if (msg.includes("wrong-password")) {
+        setError("Falsches Passwort. Bitte erneut versuchen.");
+      } else if (msg.includes("invalid-email")) {
+        setError("Ungültige E-Mail-Adresse.");
+      } else if (msg.includes("too-many-requests")) {
+        setError("Zu viele Versuche. Bitte warte einen Moment.");
+      } else {
+        setError(`Login fehlgeschlagen: ${msg}`);
+      }
     } finally {
       setLoading(false);
     }
@@ -62,8 +73,17 @@ export default function LoginPage() {
       setError("");
       await signUpWithEmail(email, password, name);
       router.push("/");
-    } catch {
-      setError("Registrierung fehlgeschlagen. Bitte versuche es erneut.");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (msg.includes("email-already-in-use")) {
+        setError("Diese E-Mail ist bereits registriert. Bitte melde dich an.");
+      } else if (msg.includes("weak-password")) {
+        setError("Passwort zu schwach. Mindestens 6 Zeichen.");
+      } else if (msg.includes("invalid-email")) {
+        setError("Ungültige E-Mail-Adresse.");
+      } else {
+        setError(`Registrierung fehlgeschlagen: ${msg}`);
+      }
     } finally {
       setLoading(false);
     }
