@@ -14,6 +14,7 @@ import { Separator } from "@/components/ui/separator";
 import { LEVELS, ACHIEVEMENTS } from "@/lib/types";
 import { User, LogOut, Trophy, Flame, Target, Sparkles, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
+import { ClawbuisFooter } from "@/components/clawbuis-badge";
 
 export default function ProfilPage() {
   const { user, stats, signOut, loading } = useAuth();
@@ -152,6 +153,7 @@ export default function ProfilPage() {
             </Button>
           </CardContent>
         </Card>
+        <ClawbuisFooter />
       </main>
     </div>
   );

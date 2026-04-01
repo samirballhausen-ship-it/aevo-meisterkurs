@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ClawbuisLogo } from "@/components/clawbuis-badge";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -51,9 +52,9 @@ export function NavBar() {
       <nav className="hidden md:flex fixed top-0 left-0 right-0 z-50 h-16 border-b border-border/20 bg-background/60 backdrop-blur-2xl">
         <div className="flex items-center justify-between w-full max-w-7xl mx-auto px-6">
           <div className="flex items-center gap-8">
-            <Link href="/" className="flex items-center gap-2.5">
-              <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
-                <BookOpen className="h-4 w-4 text-primary-foreground" />
+            <Link href="/" className="flex items-center gap-2.5 group">
+              <div className="h-8 w-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                <ClawbuisLogo className="h-4 w-4 text-primary" />
               </div>
               <span className="font-semibold text-sm tracking-tight">AEVO Meisterkurs</span>
             </Link>
