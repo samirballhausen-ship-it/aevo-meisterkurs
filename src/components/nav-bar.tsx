@@ -10,6 +10,7 @@ import {
   BarChart3,
   Trophy,
   ClipboardCheck,
+  Gamepad2,
   User,
   LogOut,
   Moon,
@@ -30,6 +31,7 @@ import { LEVELS } from "@/lib/types";
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/lernen", label: "Lernen", icon: BookOpen },
+  { href: "/pause", label: "Pause", icon: Gamepad2 },
   { href: "/statistik", label: "Statistik", icon: BarChart3 },
   { href: "/pruefung", label: "Prüfung", icon: ClipboardCheck },
 ];
