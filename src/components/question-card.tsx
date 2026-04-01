@@ -24,6 +24,7 @@ interface QuestionCardProps {
   onAnswer: (correct: boolean, responseTime: number, partial?: boolean) => void;
   questionNumber: number;
   totalQuestions: number;
+  examMode?: boolean;
 }
 
 function shuffleOptions(options: string[], correctIndex: number) {
@@ -42,7 +43,7 @@ function shuffleOptions(options: string[], correctIndex: number) {
 // MC Question Card (existing)
 // ═══════════════════════════════════════════════════════════════════════════
 
-function MCQuestionCard({ question, onAnswer, questionNumber, totalQuestions }: QuestionCardProps) {
+function MCQuestionCard({ question, onAnswer, questionNumber, totalQuestions, examMode }: QuestionCardProps) {
   const { shuffled: shuffledOptions, newCorrectIndex } = useMemo(
     () => shuffleOptions(question.options ?? [], question.correctAnswer as number),
     [question.id] // eslint-disable-line react-hooks/exhaustive-deps
@@ -94,16 +95,18 @@ function MCQuestionCard({ question, onAnswer, questionNumber, totalQuestions }: 
 
       <h2 className="text-base md:text-lg font-semibold leading-relaxed">{question.prompt}</h2>
 
-      <AnimatePresence>
-        {showHint && !showResult && (
-          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="rounded-lg bg-warning/10 border border-warning/20 p-3">
-            <div className="flex items-start gap-2">
-              <Lightbulb className="h-4 w-4 text-warning mt-0.5 shrink-0" />
-              <p className="text-sm text-foreground/80">{displayHint}</p>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {!examMode && (
+        <AnimatePresence>
+          {showHint && !showResult && (
+            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="rounded-lg bg-warning/10 border border-warning/20 p-3">
+              <div className="flex items-start gap-2">
+                <Lightbulb className="h-4 w-4 text-warning mt-0.5 shrink-0" />
+                <p className="text-sm text-foreground/80">{displayHint}</p>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      )}
 
       <div className="space-y-2.5">
         {shuffledOptions.map((option, index) => {
@@ -141,7 +144,7 @@ function MCQuestionCard({ question, onAnswer, questionNumber, totalQuestions }: 
       </div>
 
       <div className="flex items-center gap-3 pt-2">
-        {!showResult && (
+        {!showResult && !examMode && (
           <Button variant="ghost" size="sm" onClick={() => setShowHint(true)} disabled={showHint} className="text-warning hover:text-warning">
             <HelpCircle className="mr-1.5 h-4 w-4" />
             {showHint ? "Tipp angezeigt" : "Tipp anzeigen"}
@@ -155,8 +158,16 @@ function MCQuestionCard({ question, onAnswer, questionNumber, totalQuestions }: 
         )}
       </div>
 
+      {/* Exam mode: nur kurzes Feedback (richtig/falsch), keine Erklärung */}
+      {examMode && showResult && (
+        <div className={cn("rounded-lg p-3 text-center text-sm font-medium", isCorrect ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive")}>
+          {isCorrect ? "✓ Richtig" : "✗ Falsch"}
+        </div>
+      )}
+
+      {/* Normal mode: volle Erklärung */}
       <AnimatePresence>
-        {showResult && (
+        {showResult && !examMode && (
           <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} transition={{ delay: 0.3 }}
             className={cn("rounded-xl border p-4", isCorrect ? "bg-success/5 border-success/20" : "bg-primary/5 border-primary/10")}>
             <div className="flex items-start gap-3">
@@ -184,7 +195,7 @@ function MCQuestionCard({ question, onAnswer, questionNumber, totalQuestions }: 
 // Open Question Card (NEW)
 // ═══════════════════════════════════════════════════════════════════════════
 
-function OpenQuestionCard({ question, onAnswer, questionNumber, totalQuestions }: QuestionCardProps) {
+function OpenQuestionCard({ question, onAnswer, questionNumber, totalQuestions, examMode }: QuestionCardProps) {
   const [userAnswer, setUserAnswer] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [showHint, setShowHint] = useState(false);
@@ -220,24 +231,26 @@ function OpenQuestionCard({ question, onAnswer, questionNumber, totalQuestions }
 
       <h2 className="text-base md:text-lg font-semibold leading-relaxed">{question.prompt}</h2>
 
-      {/* Hint */}
-      <AnimatePresence>
-        {showHint && !submitted && (
-          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="rounded-lg bg-warning/10 border border-warning/20 p-3">
-            <div className="flex items-start gap-2">
-              <Lightbulb className="h-4 w-4 text-warning mt-0.5 shrink-0" />
-              <div className="text-sm text-foreground/80">
-                <p>{hintText}</p>
-                {question.solutionPoints && question.solutionPoints.length > 2 && (
-                  <p className="text-xs text-muted-foreground mt-1">
-                    ({question.solutionPoints.length} Punkte erwartet)
-                  </p>
-                )}
+      {/* Hint (not in exam mode) */}
+      {!examMode && (
+        <AnimatePresence>
+          {showHint && !submitted && (
+            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="rounded-lg bg-warning/10 border border-warning/20 p-3">
+              <div className="flex items-start gap-2">
+                <Lightbulb className="h-4 w-4 text-warning mt-0.5 shrink-0" />
+                <div className="text-sm text-foreground/80">
+                  <p>{hintText}</p>
+                  {question.solutionPoints && question.solutionPoints.length > 2 && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      ({question.solutionPoints.length} Punkte erwartet)
+                    </p>
+                  )}
+                </div>
               </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      )}
 
       {/* Answer Textarea */}
       <div className="space-y-2">
@@ -261,10 +274,12 @@ function OpenQuestionCard({ question, onAnswer, questionNumber, totalQuestions }
       {/* Actions before submit */}
       {!submitted && (
         <div className="flex items-center gap-3 pt-1">
-          <Button variant="ghost" size="sm" onClick={() => setShowHint(true)} disabled={showHint} className="text-warning hover:text-warning">
-            <HelpCircle className="mr-1.5 h-4 w-4" />
-            {showHint ? "Tipp angezeigt" : "Tipp"}
-          </Button>
+          {!examMode && (
+            <Button variant="ghost" size="sm" onClick={() => setShowHint(true)} disabled={showHint} className="text-warning hover:text-warning">
+              <HelpCircle className="mr-1.5 h-4 w-4" />
+              {showHint ? "Tipp angezeigt" : "Tipp"}
+            </Button>
+          )}
           <div className="flex-1" />
           <Button onClick={handleSubmit} disabled={!userAnswer.trim()} className="rounded-xl">
             <Send className="mr-1.5 h-4 w-4" />

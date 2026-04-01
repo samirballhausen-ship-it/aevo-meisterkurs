@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
+import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
 import { useProgress } from "@/lib/progress-context";
 import { NavBar } from "@/components/nav-bar";
@@ -87,8 +88,11 @@ function LernenContent() {
         break;
       }
       case "exam": {
-        const all = getNewQuestions(undefined, 100);
-        questionIds = all.sort(() => Math.random() - 0.5).slice(0, 30);
+        // Prüfungs-Simulation: 30 zufällige Fragen aus ALLEN Typen (MC + Open)
+        const all = getNewQuestions(undefined, 200);
+        const due = getDueQuestions();
+        const combined = [...new Set([...all, ...due])];
+        questionIds = combined.sort(() => Math.random() - 0.5).slice(0, 30);
         break;
       }
     }
@@ -262,6 +266,8 @@ function LernenContent() {
     const timeSpent = Math.round((Date.now() - sessionStartTime) / 1000);
     const minutes = Math.floor(timeSpent / 60);
     const seconds = timeSpent % 60;
+    const isExamResult = mode === "exam";
+    const examPassed = accuracy >= 50;
 
     return (
       <div className="min-h-screen pb-20 md:pb-6">
@@ -273,7 +279,7 @@ function LernenContent() {
             transition={{ type: "spring", stiffness: 200 }}
           >
             <Card className="border-border/50 text-center overflow-hidden">
-              <div className="h-2 bg-gradient-to-r from-primary via-success to-xp" />
+              <div className={`h-2 ${isExamResult ? (examPassed ? "bg-gradient-to-r from-success via-success to-primary" : "bg-gradient-to-r from-destructive via-destructive to-orange-500") : "bg-gradient-to-r from-primary via-success to-xp"}`} />
               <CardContent className="p-8 space-y-6">
                 <div>
                   <motion.div
@@ -282,14 +288,24 @@ function LernenContent() {
                     transition={{ type: "spring", delay: 0.2 }}
                     className="text-6xl mb-3"
                   >
-                    {accuracy >= 90 ? "🌟" : accuracy >= 70 ? "🎯" : accuracy >= 50 ? "💪" : "📚"}
+                    {isExamResult
+                      ? (examPassed ? "🎓" : "📝")
+                      : (accuracy >= 90 ? "🌟" : accuracy >= 70 ? "🎯" : accuracy >= 50 ? "💪" : "📚")}
                   </motion.div>
-                  <h1 className="text-xl font-bold">Session abgeschlossen!</h1>
+                  <h1 className="text-xl font-bold">
+                    {isExamResult
+                      ? (examPassed ? "Prüfung bestanden!" : "Nicht bestanden")
+                      : "Session abgeschlossen!"}
+                  </h1>
                   <p className="text-muted-foreground text-sm mt-1">
-                    {accuracy >= 90 ? "Hervorragend! Du bist auf dem besten Weg zum Meister!" :
-                     accuracy >= 70 ? "Gut gemacht! Weiter so!" :
-                     accuracy >= 50 ? "Nicht schlecht, aber da geht noch mehr!" :
-                     "Übung macht den Meister – bleib dran!"}
+                    {isExamResult
+                      ? (examPassed
+                          ? `${accuracy}% – Glückwunsch! Du hast die Prüfungs-Simulation bestanden.`
+                          : `${accuracy}% – Zum Bestehen werden 50% benötigt. Lerne weiter!`)
+                      : (accuracy >= 90 ? "Hervorragend! Du bist auf dem besten Weg zum Meister!" :
+                         accuracy >= 70 ? "Gut gemacht! Weiter so!" :
+                         accuracy >= 50 ? "Nicht schlecht, aber da geht noch mehr!" :
+                         "Übung macht den Meister – bleib dran!")}
                   </p>
                 </div>
 
@@ -365,6 +381,11 @@ function LernenContent() {
   }
 
   const progressPercent = ((currentIndex + 1) / sessionQuestions.length) * 100;
+  const isExam = mode === "exam";
+  const elapsedSeconds = Math.round((Date.now() - sessionStartTime) / 1000);
+  const examTimeLeft = Math.max(0, 60 * 60 - elapsedSeconds); // 60 min exam
+  const examMinutes = Math.floor(examTimeLeft / 60);
+  const examSeconds = examTimeLeft % 60;
 
   return (
     <div className="min-h-screen pb-20 md:pb-6">
@@ -374,24 +395,38 @@ function LernenContent() {
         <div className="flex items-center justify-between">
           <Button variant="ghost" size="sm" onClick={() => setMode(null)}>
             <ArrowLeft className="mr-1 h-4 w-4" />
-            Abbrechen
+            {isExam ? "Prüfung abbrechen" : "Abbrechen"}
           </Button>
           <div className="flex items-center gap-3">
-            {streak >= 3 && (
-              <Badge variant="secondary" className="gap-1">
-                <Flame className="h-3 w-3 text-orange-500" />
-                {streak}x Streak
-              </Badge>
+            {isExam ? (
+              <>
+                <Badge variant="destructive" className="gap-1 text-xs">
+                  <ClipboardCheck className="h-3 w-3" />
+                  Prüfung
+                </Badge>
+                <Badge variant="outline" className="gap-1 text-xs tabular-nums">
+                  {examMinutes}:{examSeconds.toString().padStart(2, "0")}
+                </Badge>
+              </>
+            ) : (
+              <>
+                {streak >= 3 && (
+                  <Badge variant="secondary" className="gap-1">
+                    <Flame className="h-3 w-3 text-orange-500" />
+                    {streak}x Streak
+                  </Badge>
+                )}
+                <Badge variant="outline" className="gap-1">
+                  <Trophy className="h-3 w-3 text-xp" />
+                  +{sessionXP} XP
+                </Badge>
+              </>
             )}
-            <Badge variant="outline" className="gap-1">
-              <Trophy className="h-3 w-3 text-xp" />
-              +{sessionXP} XP
-            </Badge>
           </div>
         </div>
 
         {/* Progress Bar */}
-        <Progress value={progressPercent} className="h-1.5" />
+        <Progress value={progressPercent} className={cn("h-1.5", isExam && "[&>div]:bg-destructive")} />
 
         {/* Question */}
         <AnimatePresence mode="wait">
@@ -401,6 +436,7 @@ function LernenContent() {
             onAnswer={handleAnswer}
             questionNumber={currentIndex + 1}
             totalQuestions={sessionQuestions.length}
+            examMode={isExam}
           />
         </AnimatePresence>
       </main>
