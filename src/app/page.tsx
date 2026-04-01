@@ -1,13 +1,14 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/lib/auth-context";
 import { useProgress } from "@/lib/progress-context";
 import { NavBar } from "@/components/nav-bar";
 import { ProgressRing } from "@/components/progress-ring";
 import { AnimatedCounter } from "@/components/animated-counter";
+import { DashboardVisual } from "@/components/dashboard-visual";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -16,11 +17,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { HANDLUNGSFELDER, LEVELS, type Handlungsfeld } from "@/lib/types";
 import {
   BookOpen, Flame, Trophy, Target, Zap, ChevronRight, ClipboardCheck,
-  FileText, GraduationCap, Award, Brain, Gamepad2, Sparkles,
+  FileText, GraduationCap, Award, Brain, Gamepad2, Sparkles, LogIn, UserCircle,
 } from "lucide-react";
 import Link from "next/link";
-import { ClawbuisBadge } from "@/components/clawbuis-badge";
-import { DashboardVisual } from "@/components/dashboard-visual";
+import { ClawbuisBadge, ClawbuisFooter } from "@/components/clawbuis-badge";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const HF_ICONS: Record<string, any> = { ClipboardCheck, FileText, GraduationCap, Award };
@@ -38,18 +38,75 @@ const fadeUp = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transi
 const stagger = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.07 } } };
 
 export default function DashboardPage() {
-  const { user, stats, loading: authLoading } = useAuth();
+  const { user, stats, loading: authLoading, signInAsGuest } = useAuth();
   const { getHFProgress, getOverallProgress, getDueQuestions, getWeakQuestions } = useProgress();
   const router = useRouter();
 
-  useEffect(() => {
-    if (!authLoading && !user) router.push("/login");
-  }, [user, authLoading, router]);
-
-  if (authLoading || !user) {
+  if (authLoading) {
     return <div className="min-h-screen p-4 space-y-4"><Skeleton className="h-48 w-full rounded-2xl" /><div className="grid grid-cols-3 gap-3"><Skeleton className="h-20 rounded-xl" /><Skeleton className="h-20 rounded-xl" /><Skeleton className="h-20 rounded-xl" /></div></div>;
   }
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  // NICHT EINGELOGGT → Willkommen + Direkt loslegen / Anmelden
+  // ═══════════════════════════════════════════════════════════════════════════
+  if (!user) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <div className="flex-1 flex items-center justify-center p-4 relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/8 via-background to-background" />
+          <div className="absolute top-1/4 -left-32 w-[500px] h-[500px] rounded-full bg-primary/8 blur-[100px] animate-pulse" />
+
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md relative z-10 space-y-6">
+            {/* Logo */}
+            <div className="text-center">
+              <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", delay: 0.2 }}
+                className="inline-flex items-center justify-center h-16 w-16 rounded-2xl bg-primary/10 border border-primary/20 mb-4">
+                <GraduationCap className="h-8 w-8 text-primary" />
+              </motion.div>
+              <h1 className="text-2xl font-bold tracking-tight text-gradient">AEVO Meisterkurs</h1>
+              <p className="text-muted-foreground text-sm mt-1">242 Fragen · 4 Themenbereiche · Berufs- und Arbeitspädagogik</p>
+            </div>
+
+            {/* Zwei große Buttons */}
+            <div className="space-y-3">
+              <Button
+                onClick={async () => { await signInAsGuest(); }}
+                size="lg"
+                className="w-full h-14 rounded-2xl text-base font-semibold shadow-lg shadow-primary/20"
+              >
+                <Sparkles className="mr-2 h-5 w-5" />
+                Direkt loslegen
+              </Button>
+
+              <Link href="/login">
+                <Button variant="outline" size="lg" className="w-full h-12 rounded-2xl text-sm">
+                  <LogIn className="mr-2 h-4 w-4" />
+                  Anmelden / Registrieren
+                </Button>
+              </Link>
+            </div>
+
+            {/* Disclaimer */}
+            <div className="rounded-xl bg-card/40 backdrop-blur-lg border border-border/20 p-3.5 space-y-2">
+              <div className="flex items-start gap-2.5">
+                <UserCircle className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                <div className="text-xs text-muted-foreground space-y-1">
+                  <p><strong className="text-foreground/80">Ohne Anmeldung:</strong> Dein Fortschritt wird nur auf diesem Gerät gespeichert. Geht verloren bei Cache-Leerung oder Gerätewechsel.</p>
+                  <p><strong className="text-foreground/80">Mit Anmeldung:</strong> Dein Lernfortschritt wird sicher in der Cloud gespeichert. Auf jedem Gerät verfügbar.</p>
+                </div>
+              </div>
+            </div>
+
+            <ClawbuisFooter />
+          </motion.div>
+        </div>
+      </div>
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // EINGELOGGT → Dashboard
+  // ═══════════════════════════════════════════════════════════════════════════
   const overall = getOverallProgress();
   const dueCount = getDueQuestions().length;
   const weakCount = getWeakQuestions().length;
@@ -61,76 +118,8 @@ export default function DashboardPage() {
   const xpToNext = nextLevel ? nextLevel.xpRequired - (stats?.xp ?? 0) : 0;
   const levelProgress = nextLevel ? ((stats?.xp ?? 0) - currentLevel.xpRequired) / (nextLevel.xpRequired - currentLevel.xpRequired) * 100 : 100;
   const firstName = user.displayName?.split(" ")[0] ?? "Meisterschüler";
-  const isNewUser = (stats?.totalQuestionsAnswered ?? 0) === 0;
+  const hasAnswered = (stats?.totalQuestionsAnswered ?? 0) > 0;
 
-  // ─── Onboarding für Erstnutzer ────────────────────────────────────────────
-  if (isNewUser) {
-    return (
-      <div className="min-h-screen pb-20 md:pb-6">
-        <NavBar />
-        <main className="max-w-lg mx-auto px-4 md:px-6 py-8">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center space-y-6">
-            <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", delay: 0.2 }} className="text-6xl">
-              👋
-            </motion.div>
-            <div>
-              <h1 className="text-2xl font-bold">Willkommen, {firstName}!</h1>
-              <p className="text-muted-foreground text-sm mt-2">
-                Du hast <span className="text-primary font-semibold">{overall.total} Fragen</span> zum Üben.
-                <br />So funktioniert die App:
-              </p>
-            </div>
-
-            <div className="space-y-3 text-left">
-              {[
-                { icon: "📖", title: "Fragen beantworten", desc: "Multiple Choice und Freitext – mit Erklärungen zu jeder Antwort" },
-                { icon: "🧠", title: "Clever wiederholen", desc: "Die App merkt sich was du kannst und was nicht – und fragt gezielt nach" },
-                { icon: "📊", title: "Fortschritt sehen", desc: "Verfolge wie gut du für die Prüfung vorbereitet bist" },
-              ].map((step, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.4 + i * 0.15 }}
-                  className="flex items-start gap-3 p-3 rounded-xl bg-card/50 backdrop-blur-lg border border-border/30"
-                >
-                  <span className="text-2xl">{step.icon}</span>
-                  <div>
-                    <p className="text-sm font-medium">{step.title}</p>
-                    <p className="text-xs text-muted-foreground">{step.desc}</p>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.9 }} className="space-y-3">
-              <Link href="/lernen">
-                <Button size="lg" className="w-full h-14 rounded-2xl text-base font-semibold shadow-lg shadow-primary/20">
-                  <Sparkles className="mr-2 h-5 w-5" />
-                  Erste Frage beantworten
-                </Button>
-              </Link>
-
-              {user.uid === "guest-user" && (
-                <div className="rounded-xl bg-warning/10 border border-warning/20 p-3 text-center">
-                  <p className="text-xs text-foreground/80">
-                    ⚠️ Du bist ohne Anmeldung unterwegs. Dein Fortschritt wird <strong>nur auf diesem Gerät</strong> gespeichert und kann verloren gehen.
-                  </p>
-                  <Link href="/login">
-                    <Button variant="outline" size="sm" className="mt-2 text-xs rounded-lg h-7">
-                      Jetzt Konto erstellen & Fortschritt sichern
-                    </Button>
-                  </Link>
-                </div>
-              )}
-            </motion.div>
-          </motion.div>
-        </main>
-      </div>
-    );
-  }
-
-  // ─── Reguläres Dashboard ──────────────────────────────────────────────────
   return (
     <div className="min-h-screen pb-20 md:pb-6">
       <NavBar />
@@ -151,19 +140,20 @@ export default function DashboardPage() {
                     </div>
                   </ProgressRing>
                 </motion.div>
-
                 <div className="flex-1 text-center md:text-left space-y-3">
                   <div>
                     <h1 className="text-lg font-bold">Hallo, {firstName}!</h1>
                     <p className="text-muted-foreground text-xs mt-0.5">
-                      {dueCount > 0 ? `${dueCount} Fragen zur Wiederholung bereit` : "Lerne neue Fragen und werde Meister"}
+                      {!hasAnswered ? "Beantworte deine erste Frage und starte durch!" :
+                       dueCount > 0 ? `${dueCount} Fragen zur Wiederholung bereit` :
+                       "Lerne neue Fragen und werde Meister"}
                     </p>
                   </div>
                   <div className="flex gap-2.5 justify-center md:justify-start">
                     <Link href="/lernen">
                       <Button size="lg" className="rounded-xl h-10 px-5 text-sm">
                         <Zap className="mr-1.5 h-4 w-4" />
-                        {dueCount > 0 ? "Wiederholen" : "Jetzt lernen"}
+                        {!hasAnswered ? "Erste Frage" : dueCount > 0 ? "Wiederholen" : "Jetzt lernen"}
                       </Button>
                     </Link>
                     {weakCount > 0 && (
@@ -176,15 +166,11 @@ export default function DashboardPage() {
                     )}
                   </div>
                 </div>
-
                 <div className="hidden lg:block text-center min-w-[110px]">
                   <div className="text-3xl mb-1">{currentLevel.icon}</div>
                   <p className="font-semibold text-sm">{currentLevel.title}</p>
                   {nextLevel && (
-                    <>
-                      <Progress value={levelProgress} className="h-1 mt-2 bg-muted" />
-                      <p className="text-[9px] text-muted-foreground mt-1">{xpToNext} XP bis {nextLevel.title}</p>
-                    </>
+                    <><Progress value={levelProgress} className="h-1 mt-2 bg-muted" /><p className="text-[9px] text-muted-foreground mt-1">{xpToNext} XP bis {nextLevel.title}</p></>
                   )}
                 </div>
               </div>
@@ -213,10 +199,10 @@ export default function DashboardPage() {
           </div>
         </motion.div>
 
-        {/* Visual Overview */}
-        {(stats?.totalQuestionsAnswered ?? 0) > 0 && (
+        {/* Visual Chart (nur wenn Fragen beantwortet) */}
+        {hasAnswered && (
           <motion.div variants={fadeUp}>
-            <Card className="border-border/30 bg-card/50 backdrop-blur-xl overflow-hidden">
+            <Card className="border-border/30 bg-card/50 backdrop-blur-xl">
               <CardContent className="p-5 flex flex-col items-center">
                 <DashboardVisual
                   hfData={(["HF1", "HF2", "HF3", "HF4"] as Handlungsfeld[]).map((hf) => {
@@ -239,7 +225,6 @@ export default function DashboardPage() {
             <Badge variant="secondary" className="text-[10px]">{overall.mastered}/{overall.total} gemeistert</Badge>
           </div>
         </motion.div>
-
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {(Object.entries(HANDLUNGSFELDER) as [Handlungsfeld, typeof HANDLUNGSFELDER.HF1][]).map(([hf, info]) => {
             const hfProgress = getHFProgress(hf);
@@ -248,7 +233,7 @@ export default function DashboardPage() {
             return (
               <motion.div key={hf} variants={fadeUp} whileHover={{ y: -2, scale: 1.01 }} whileTap={{ scale: 0.98 }}>
                 <Link href={`/lernen?hf=${hf}`}>
-                  <Card className={`border-border/30 bg-gradient-to-br ${HF_COLORS[hf]} backdrop-blur-lg hover:border-primary/30 transition-all group cursor-pointer overflow-hidden`}>
+                  <Card className={`border-border/30 bg-gradient-to-br ${HF_COLORS[hf]} backdrop-blur-lg hover:border-primary/30 transition-all group cursor-pointer`}>
                     <CardContent className="p-4">
                       <div className="flex items-center gap-3">
                         <div className="h-10 w-10 rounded-xl bg-background/50 flex items-center justify-center shrink-0">
@@ -275,7 +260,7 @@ export default function DashboardPage() {
           })}
         </div>
 
-        {/* Quick Actions: Prüfung + Pause */}
+        {/* Quick Actions */}
         <motion.div variants={fadeUp}>
           <div className="grid grid-cols-2 gap-3">
             <Link href="/pruefung">
