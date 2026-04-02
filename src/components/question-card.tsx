@@ -189,6 +189,26 @@ function MCQuestionCard({ question, onAnswer, questionNumber, totalQuestions, ex
         )}
       </AnimatePresence>
 
+      {/* Eselsbrücke – nach dem Beantworten */}
+      <AnimatePresence>
+        {showResult && !examMode && hasRealHint && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            transition={{ delay: 0.6 }}
+            className="rounded-xl border border-xp/20 bg-xp/5 p-3"
+          >
+            <div className="flex items-start gap-2.5">
+              <span className="text-base shrink-0 mt-0.5">🧠</span>
+              <div>
+                <p className="text-[10px] font-semibold text-xp mb-0.5">Eselsbrücke</p>
+                <p className="text-xs text-muted-foreground leading-relaxed">{displayHint}</p>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {showResult && (
         <ReportButton questionId={question.id} questionPrompt={question.prompt} />
       )}
@@ -363,6 +383,26 @@ function OpenQuestionCard({ question, onAnswer, questionNumber, totalQuestions, 
                   <XCircle className="mr-1.5 h-4 w-4" />
                   Falsch
                 </Button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Eselsbrücke – nach dem Beantworten */}
+      <AnimatePresence>
+        {submitted && !examMode && hintText && !hintText.startsWith("Themenbereich:") && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            transition={{ delay: 0.3 }}
+            className="rounded-xl border border-xp/20 bg-xp/5 p-3"
+          >
+            <div className="flex items-start gap-2.5">
+              <span className="text-base shrink-0 mt-0.5">🧠</span>
+              <div>
+                <p className="text-[10px] font-semibold text-xp mb-0.5">Eselsbrücke</p>
+                <p className="text-xs text-muted-foreground leading-relaxed">{hintText}</p>
               </div>
             </div>
           </motion.div>
