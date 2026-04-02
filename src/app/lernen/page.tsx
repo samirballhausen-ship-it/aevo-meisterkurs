@@ -96,8 +96,9 @@ function LernenContent() {
         break;
       }
       case "random": {
-        // Weighted random: lower effective mastery = more likely to appear
-        questionIds = getSmartQuestions(hf, 20);
+        // Nur neue Fragen: 20 zufällige noch nie beantwortete Fragen
+        const unbeantwortet = getNewQuestions(hf, 200);
+        questionIds = unbeantwortet.sort(() => Math.random() - 0.5).slice(0, 20);
         break;
       }
       case "exam": {
@@ -223,8 +224,8 @@ function LernenContent() {
               {
                 mode: "random" as SessionMode,
                 icon: BookOpen,
-                title: "Adaptive Mischung",
-                desc: "Schwache Fragen + neue Entdeckungen, gewichtet nach deinem Lernstand",
+                title: "Nur neue Fragen",
+                desc: "20 zufällige Fragen die du noch nie beantwortet hast",
                 accent: "text-emerald-500",
               },
               {
@@ -379,11 +380,6 @@ function LernenContent() {
                       className="w-full rounded-xl"
                       variant="outline"
                       onClick={() => {
-                        // Filter to only wrong questions from this session
-                        const wrongIds = sessionQuestions.filter((qid, idx) => {
-                          // We can't track per-question, so restart with weak
-                          return true;
-                        });
                         setMode(null);
                         setTimeout(() => startSession("weakTopics"), 100);
                       }}

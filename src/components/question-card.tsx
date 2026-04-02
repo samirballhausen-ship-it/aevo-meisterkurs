@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useMemo, useId } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import type { Question } from "@/lib/types";

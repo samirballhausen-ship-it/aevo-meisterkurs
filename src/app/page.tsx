@@ -8,7 +8,6 @@ import { useProgress } from "@/lib/progress-context";
 import { NavBar } from "@/components/nav-bar";
 import { ProgressRing } from "@/components/progress-ring";
 import { AnimatedCounter } from "@/components/animated-counter";
-import { DashboardVisual } from "@/components/dashboard-visual";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -368,7 +367,7 @@ function LandingScreen({ signInAsGuest }: { signInAsGuest: () => Promise<void> }
               <GraduationCap className="h-8 w-8 text-primary" />
             </motion.div>
             <h1 className="text-2xl font-bold tracking-tight text-gradient">AEVO Meisterkurs</h1>
-            <p className="text-muted-foreground text-sm mt-1">242 Fragen · 4 Themenbereiche</p>
+            <p className="text-muted-foreground text-sm mt-1">298 Fragen · 4 Themenbereiche</p>
           </div>
 
           {/* Buttons */}

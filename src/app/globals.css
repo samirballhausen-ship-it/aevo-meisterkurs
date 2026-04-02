@@ -214,6 +214,20 @@
   animation: float 6s ease-in-out infinite;
 }
 
+/* Safe area bottom padding for fixed bottom bars (iOS notch) */
+.safe-area-pb {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Hide scrollbar but keep scrolling */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
 /* Gradient text */
 .text-gradient {
   background: linear-gradient(135deg, var(--primary) 0%, var(--sage) 50%, var(--success) 100%);
