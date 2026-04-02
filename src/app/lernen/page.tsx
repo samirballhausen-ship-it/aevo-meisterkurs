@@ -88,6 +88,12 @@ function LernenContent() {
         questionIds = getWeakQuestions(20);
         break;
       }
+      case "random": {
+        // 20 zufällige noch unbeantwortete Fragen
+        const unbeantwortet = getNewQuestions(hf, 200);
+        questionIds = unbeantwortet.sort(() => Math.random() - 0.5).slice(0, 20);
+        break;
+      }
       case "exam": {
         // Prüfungs-Simulation: 30 zufällige Fragen aus ALLEN Typen (MC + Open)
         const all = getNewQuestions(undefined, 200);
@@ -199,6 +205,13 @@ function LernenContent() {
                 title: "Tägliches Lernen",
                 desc: "Die App wählt die richtigen Fragen für dich aus (empfohlen)",
                 accent: "text-primary",
+              },
+              {
+                mode: "random" as SessionMode,
+                icon: BookOpen,
+                title: "Neue Fragen Sprint",
+                desc: "20 zufällige Fragen die du noch nicht beantwortet hast",
+                accent: "text-emerald-500",
               },
               {
                 mode: "weakTopics" as SessionMode,

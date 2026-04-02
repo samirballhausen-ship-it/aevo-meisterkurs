@@ -131,7 +131,7 @@ export const ACHIEVEMENTS: Achievement[] = [
 
 // ─── Session Types ──────────────────────────────────────────────────────────
 
-export type SessionMode = "spaced" | "handlungsfeld" | "exam" | "weakTopics";
+export type SessionMode = "spaced" | "handlungsfeld" | "exam" | "weakTopics" | "random";
 
 export interface SessionConfig {
   mode: SessionMode;
