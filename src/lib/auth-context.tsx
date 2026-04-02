@@ -116,27 +116,65 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function handleSignInWithGoogle() {
     const result = await signInWithPopup(auth, googleProvider);
 
-    // Initialize progress if new user (don't let Firestore errors block login)
+    // Set user state immediately (don't rely solely on onAuthStateChanged)
+    const appUser: AppUser = {
+      uid: result.user.uid,
+      email: result.user.email,
+      displayName: result.user.displayName,
+      photoURL: result.user.photoURL,
+    };
+    setUser(appUser);
+    setIsGuest(false);
+
+    // Load or create stats
     try {
       const progressRef = doc(db, "users", result.user.uid);
       const existing = await getDoc(progressRef);
       if (!existing.exists()) {
         await setDoc(progressRef, FRESH_STATS);
+        setStats(FRESH_STATS);
+      } else {
+        setStats(existing.data() as UserStats);
       }
     } catch (err) {
       console.error("Firestore init error (non-blocking):", err);
+      setStats(FRESH_STATS);
     }
+    setLoading(false);
   }
 
   // ─── Real Email Auth ───────────────────────────────────────────────────────
   async function handleSignInWithEmail(email: string, password: string) {
-    await signInWithEmailAndPassword(auth, email, password);
+    const result = await signInWithEmailAndPassword(auth, email, password);
+    setUser({
+      uid: result.user.uid,
+      email: result.user.email,
+      displayName: result.user.displayName,
+      photoURL: result.user.photoURL,
+    });
+    setIsGuest(false);
+    try {
+      const statsDoc = await getDoc(doc(db, "users", result.user.uid));
+      setStats(statsDoc.exists() ? (statsDoc.data() as UserStats) : FRESH_STATS);
+    } catch {
+      setStats(FRESH_STATS);
+    }
+    setLoading(false);
   }
 
   async function handleSignUpWithEmail(email: string, password: string, name: string) {
     const result = await createUserWithEmailAndPassword(auth, email, password);
     await updateProfile(result.user, { displayName: name });
     await setDoc(doc(db, "users", result.user.uid), FRESH_STATS);
+    setUser({
+      uid: result.user.uid,
+      email: result.user.email,
+      displayName: name,
+      photoURL: result.user.photoURL,
+    });
+    setIsGuest(false);
+    setStats(FRESH_STATS);
+    setLoading(false);
   }
 
   // ─── Guest Mode (localStorage only) ───────────────────────────────────────

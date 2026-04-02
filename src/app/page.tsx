@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/lib/auth-context";
 import { useProgress } from "@/lib/progress-context";
 import { NavBar } from "@/components/nav-bar";
@@ -18,6 +18,7 @@ import { HANDLUNGSFELDER, LEVELS, type Handlungsfeld } from "@/lib/types";
 import {
   BookOpen, Flame, Trophy, Target, Zap, ChevronRight, ClipboardCheck,
   FileText, GraduationCap, Award, Brain, Gamepad2, Sparkles, LogIn, UserCircle, ChevronDown, ChevronUp,
+  Flag, Send, CheckCircle2,
 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
@@ -26,6 +27,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ClawbuisBadge, ClawbuisFooter } from "@/components/clawbuis-badge";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { Textarea } from "@/components/ui/textarea";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const HF_ICONS: Record<string, any> = { ClipboardCheck, FileText, GraduationCap, Award };
@@ -239,6 +243,11 @@ export default function DashboardPage() {
           </div>
         </motion.div>
 
+        {/* Fehler melden Banner */}
+        <motion.div variants={fadeUp}>
+          <FeedbackBanner />
+        </motion.div>
+
         {/* Gast-Hinweis */}
         {user.uid === "guest-user" && (
           <motion.div variants={fadeUp}>
@@ -388,5 +397,112 @@ function LandingScreen({ signInAsGuest }: { signInAsGuest: () => Promise<void> }
         </motion.div>
       </div>
     </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Fehler melden Banner (Dashboard)
+// ═══════════════════════════════════════════════════════════════════════════
+
+function FeedbackBanner() {
+  const { user } = useAuth();
+  const [open, setOpen] = useState(false);
+  const [message, setMessage] = useState("");
+  const [sent, setSent] = useState(false);
+  const [sending, setSending] = useState(false);
+
+  async function handleSend() {
+    if (!message.trim()) return;
+    setSending(true);
+    try {
+      await addDoc(collection(db, "reports"), {
+        questionId: "general",
+        questionPrompt: "Allgemeines Feedback vom Dashboard",
+        message: message.trim(),
+        userId: user?.uid ?? "anonym",
+        userName: user?.displayName ?? "Gast",
+        createdAt: serverTimestamp(),
+        status: "new",
+      });
+    } catch {
+      const reports = JSON.parse(localStorage.getItem("lernapp-reports") ?? "[]");
+      reports.push({ questionId: "general", message: message.trim(), date: new Date().toISOString() });
+      localStorage.setItem("lernapp-reports", JSON.stringify(reports));
+    }
+    setSending(false);
+    setSent(true);
+    setTimeout(() => { setSent(false); setOpen(false); setMessage(""); }, 2500);
+  }
+
+  return (
+    <Card className="border-destructive/20 bg-gradient-to-r from-destructive/8 to-destructive/3 backdrop-blur-lg overflow-hidden">
+      <div className="h-0.5 bg-gradient-to-r from-destructive/40 via-destructive/60 to-destructive/40" />
+      <CardContent className="p-4">
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 rounded-xl bg-destructive/10 flex items-center justify-center shrink-0 animate-pulse-glow">
+            <Flag className="h-5 w-5 text-destructive" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="font-semibold text-sm">Fehler gefunden?</h3>
+            <p className="text-muted-foreground text-[10px] mt-0.5">
+              Falsche Antwort, Tippfehler, fehlender Kontext – melde es direkt!
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setOpen(!open)}
+            className="shrink-0 rounded-lg text-[10px] h-8 px-3 border-destructive/30 text-destructive hover:bg-destructive/10 hover:border-destructive/50"
+          >
+            <Flag className="h-3 w-3 mr-1" />
+            {open ? "Schließen" : "Jetzt melden"}
+          </Button>
+        </div>
+
+        <AnimatePresence>
+          {open && !sent && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="mt-3 space-y-2"
+            >
+              <Textarea
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                placeholder="z.B. 'Frage zu Moritz Petersen: Antwort B ist falsch markiert' oder 'Tippfehler in Handlungsfeld 3, Frage 12'"
+                rows={3}
+                className="text-xs resize-none"
+              />
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  onClick={handleSend}
+                  disabled={!message.trim() || sending}
+                  className="flex-1 h-9 text-xs rounded-lg bg-destructive hover:bg-destructive/90 text-white"
+                >
+                  <Send className="h-3 w-3 mr-1.5" />
+                  {sending ? "Wird gesendet..." : "Fehler melden"}
+                </Button>
+                <p className="text-[9px] text-muted-foreground shrink-0">
+                  Du kannst auch bei jeder Frage direkt melden
+                </p>
+              </div>
+            </motion.div>
+          )}
+          {sent && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="mt-3 rounded-lg bg-success/10 border border-success/20 p-2.5 flex items-center gap-2"
+            >
+              <CheckCircle2 className="h-4 w-4 text-success shrink-0" />
+              <p className="text-xs text-success">Danke! Wird schnellstmöglich korrigiert.</p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </CardContent>
+    </Card>
   );
 }

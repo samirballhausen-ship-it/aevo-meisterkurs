@@ -8,7 +8,7 @@ import { useAuth } from "@/lib/auth-context";
 import { NavBar } from "@/components/nav-bar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Coffee, Gamepad2, Brain, Zap, Code } from "lucide-react";
+import { Coffee, Gamepad2, Brain, Zap, Code, Rocket } from "lucide-react";
 
 const KnowledgeCatcher = dynamic(
   () => import("@/components/games/knowledge-catcher").then((m) => m.KnowledgeCatcher),
@@ -24,6 +24,10 @@ const SpeedQuiz = dynamic(
 );
 const ClawbuisClicker = dynamic(
   () => import("@/components/games/clawbuis-clicker").then((m) => m.ClawbuisClicker),
+  { ssr: false }
+);
+const DoodleJump = dynamic(
+  () => import("@/components/games/doodle-jump").then((m) => m.DoodleJump),
   { ssr: false }
 );
 
@@ -52,7 +56,7 @@ export default function PausePage() {
             <div>
               <h1 className="text-xl font-bold tracking-tight">Lernpause</h1>
               <p className="text-muted-foreground text-sm">
-                4 Mini-Games zum Abschalten und Auffrischen
+                5 Mini-Games zum Abschalten und Auffrischen
               </p>
             </div>
           </div>
@@ -67,10 +71,14 @@ export default function PausePage() {
             <div className="h-1 bg-gradient-to-r from-primary via-xp to-warning" />
             <CardContent className="p-4 md:p-6">
               <Tabs defaultValue="clicker">
-                <TabsList className="grid w-full grid-cols-4 mb-5">
+                <TabsList className="grid w-full grid-cols-5 mb-5">
                   <TabsTrigger value="clicker" className="gap-1 text-[10px]">
                     <Code className="h-3.5 w-3.5" />
-                    Code Empire
+                    Empire
+                  </TabsTrigger>
+                  <TabsTrigger value="jump" className="gap-1 text-[10px]">
+                    <Rocket className="h-3.5 w-3.5" />
+                    Jump
                   </TabsTrigger>
                   <TabsTrigger value="catcher" className="gap-1 text-[10px]">
                     <Gamepad2 className="h-3.5 w-3.5" />
@@ -88,6 +96,10 @@ export default function PausePage() {
 
                 <TabsContent value="clicker">
                   <ClawbuisClicker />
+                </TabsContent>
+
+                <TabsContent value="jump">
+                  <DoodleJump />
                 </TabsContent>
 
                 <TabsContent value="catcher">
