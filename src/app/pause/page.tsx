@@ -8,7 +8,7 @@ import { useAuth } from "@/lib/auth-context";
 import { NavBar } from "@/components/nav-bar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Coffee, Gamepad2, Brain, Zap } from "lucide-react";
+import { Coffee, Gamepad2, Brain, Zap, Code } from "lucide-react";
 
 const KnowledgeCatcher = dynamic(
   () => import("@/components/games/knowledge-catcher").then((m) => m.KnowledgeCatcher),
@@ -20,6 +20,10 @@ const TermMemory = dynamic(
 );
 const SpeedQuiz = dynamic(
   () => import("@/components/games/speed-quiz").then((m) => m.SpeedQuiz),
+  { ssr: false }
+);
+const ClawbuisClicker = dynamic(
+  () => import("@/components/games/clawbuis-clicker").then((m) => m.ClawbuisClicker),
   { ssr: false }
 );
 
@@ -48,7 +52,7 @@ export default function PausePage() {
             <div>
               <h1 className="text-xl font-bold tracking-tight">Lernpause</h1>
               <p className="text-muted-foreground text-sm">
-                3 Mini-Games zum Abschalten und Auffrischen
+                4 Mini-Games zum Abschalten und Auffrischen
               </p>
             </div>
           </div>
@@ -62,21 +66,29 @@ export default function PausePage() {
           <Card className="border-border/30 bg-card/50 backdrop-blur-xl overflow-hidden">
             <div className="h-1 bg-gradient-to-r from-primary via-xp to-warning" />
             <CardContent className="p-4 md:p-6">
-              <Tabs defaultValue="catcher">
-                <TabsList className="grid w-full grid-cols-3 mb-5">
-                  <TabsTrigger value="catcher" className="gap-1.5 text-xs">
-                    <Gamepad2 className="h-3.5 w-3.5" />
-                    Wissens-Fang
+              <Tabs defaultValue="clicker">
+                <TabsList className="grid w-full grid-cols-4 mb-5">
+                  <TabsTrigger value="clicker" className="gap-1 text-[10px]">
+                    <Code className="h-3.5 w-3.5" />
+                    Code Empire
                   </TabsTrigger>
-                  <TabsTrigger value="memory" className="gap-1.5 text-xs">
+                  <TabsTrigger value="catcher" className="gap-1 text-[10px]">
+                    <Gamepad2 className="h-3.5 w-3.5" />
+                    Fang
+                  </TabsTrigger>
+                  <TabsTrigger value="memory" className="gap-1 text-[10px]">
                     <Brain className="h-3.5 w-3.5" />
                     Memory
                   </TabsTrigger>
-                  <TabsTrigger value="speed" className="gap-1.5 text-xs">
+                  <TabsTrigger value="speed" className="gap-1 text-[10px]">
                     <Zap className="h-3.5 w-3.5" />
-                    Speed-Quiz
+                    Speed
                   </TabsTrigger>
                 </TabsList>
+
+                <TabsContent value="clicker">
+                  <ClawbuisClicker />
+                </TabsContent>
 
                 <TabsContent value="catcher">
                   <KnowledgeCatcher />
