@@ -3,6 +3,9 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
+import { doc, getDoc, setDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ClawbuisLogo } from "@/components/clawbuis-badge";
@@ -53,17 +56,45 @@ function formatNum(n: number) {
 }
 
 export function ClawbuisClicker() {
+  const { user } = useAuth();
   const [game, setGame] = useState<GameState>(loadGame);
   const [clicks, setClicks] = useState<{ id: number; x: number; y: number; amount: number }[]>([]);
   const [pulse, setPulse] = useState(false);
   const [levelUp, setLevelUp] = useState(false);
+  const [loaded, setLoaded] = useState(false);
   const clickIdRef = useRef(0);
+  const isGuest = !user || user.uid === "guest-user";
 
-  // Auto-save
+  // Load from Firestore on mount (for logged-in users)
   useEffect(() => {
-    const t = setInterval(() => localStorage.setItem(SAVE_KEY, JSON.stringify(game)), 3000);
+    if (isGuest || loaded) return;
+    async function loadCloud() {
+      try {
+        const snap = await getDoc(doc(db, "clicker", user!.uid));
+        if (snap.exists()) {
+          const cloud = snap.data() as GameState;
+          // Use whichever save has more progress
+          const local = loadGame();
+          if (cloud.totalEarned > local.totalEarned) {
+            setGame(cloud);
+          }
+        }
+      } catch { /* Firestore unavailable, use local */ }
+      setLoaded(true);
+    }
+    loadCloud();
+  }, [user, isGuest, loaded]);
+
+  // Auto-save: localStorage always + Firestore for logged-in users
+  useEffect(() => {
+    const t = setInterval(() => {
+      localStorage.setItem(SAVE_KEY, JSON.stringify(game));
+      if (!isGuest && user) {
+        setDoc(doc(db, "clicker", user.uid), game).catch(() => {});
+      }
+    }, 5000);
     return () => clearInterval(t);
-  }, [game]);
+  }, [game, user, isGuest]);
 
   // Auto-generate
   useEffect(() => {
@@ -82,10 +113,16 @@ export function ClawbuisClicker() {
 
   // Save on unload
   useEffect(() => {
-    const h = () => localStorage.setItem(SAVE_KEY, JSON.stringify(game));
+    const h = () => {
+      localStorage.setItem(SAVE_KEY, JSON.stringify(game));
+      if (!isGuest && user) {
+        // navigator.sendBeacon doesn't work for Firestore, but try sync save
+        try { setDoc(doc(db, "clicker", user.uid), game); } catch {}
+      }
+    };
     window.addEventListener("beforeunload", h);
     return () => window.removeEventListener("beforeunload", h);
-  }, [game]);
+  }, [game, user, isGuest]);
 
   // Level up dismiss
   useEffect(() => {
