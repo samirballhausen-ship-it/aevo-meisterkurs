@@ -415,7 +415,11 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
     }
 
     const started = stats.totalQuestions - stats.notStarted;
-    stats.avgMastery = started > 0 ? Math.round(masterySum / started) : 0;
+    // Lern-Score = avgMastery × √coverage
+    // Prevents inflated score from few answered questions (30/255 perfect → 35 not 100)
+    const rawAvg = started > 0 ? masterySum / started : 0;
+    const coverage = started / stats.totalQuestions;
+    stats.avgMastery = Math.round(rawAvg * Math.sqrt(Math.min(coverage, 1)));
 
     stats.weakestTopics = Object.entries(topicData)
       .map(([key, d]) => ({

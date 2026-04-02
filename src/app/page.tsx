@@ -48,7 +48,7 @@ const stagger = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { stag
 
 export default function DashboardPage() {
   const { user, stats, loading: authLoading, signInAsGuest } = useAuth();
-  const { getHFProgress, getOverallProgress, getDueQuestions, getWeakQuestions, getMasteryStats } = useProgress();
+  const { getHFProgress, getOverallProgress, getDueQuestions, getWeakQuestions, getMasteryStats, progress } = useProgress();
   const router = useRouter();
 
   if (authLoading) {
@@ -197,7 +197,7 @@ export default function DashboardPage() {
                         {avgMastery >= 80 ? "Prüfungsreif!" : avgMastery >= 60 ? "Fast geschafft!" : avgMastery >= 40 ? "Auf gutem Weg" : avgMastery >= 20 ? "Weitermachen!" : "Los geht's!"}
                       </p>
                       <p className="text-[10px] text-muted-foreground mt-0.5">
-                        {masteryStats.mastered + masteryStats.secure} von {masteryStats.totalQuestions} sicher
+                        {progress.size} von {masteryStats.totalQuestions} bearbeitet · {masteryStats.mastered + masteryStats.secure} sicher
                       </p>
                     </div>
                     {/* Mini HF bars */}
