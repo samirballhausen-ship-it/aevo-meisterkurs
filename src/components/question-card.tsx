@@ -18,6 +18,7 @@ import {
   Send,
   PenLine,
 } from "lucide-react";
+import { ReportButton } from "./report-button";
 
 interface QuestionCardProps {
   question: Question;
@@ -187,6 +188,10 @@ function MCQuestionCard({ question, onAnswer, questionNumber, totalQuestions, ex
           </motion.div>
         )}
       </AnimatePresence>
+
+      {showResult && (
+        <ReportButton questionId={question.id} questionPrompt={question.prompt} />
+      )}
     </CardContent>
   );
 }
@@ -363,6 +368,10 @@ function OpenQuestionCard({ question, onAnswer, questionNumber, totalQuestions, 
           </motion.div>
         )}
       </AnimatePresence>
+
+      {submitted && (
+        <ReportButton questionId={question.id} questionPrompt={question.prompt} />
+      )}
     </CardContent>
   );
 }
