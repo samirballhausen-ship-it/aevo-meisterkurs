@@ -48,7 +48,7 @@ const stagger = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { stag
 
 export default function DashboardPage() {
   const { user, stats, loading: authLoading, signInAsGuest } = useAuth();
-  const { getHFProgress, getOverallProgress, getDueQuestions, getWeakQuestions } = useProgress();
+  const { getHFProgress, getOverallProgress, getDueQuestions, getWeakQuestions, getMasteryStats } = useProgress();
   const router = useRouter();
 
   if (authLoading) {
@@ -66,6 +66,8 @@ export default function DashboardPage() {
   // EINGELOGGT → Dashboard
   // ═══════════════════════════════════════════════════════════════════════════
   const overall = getOverallProgress();
+  const masteryStats = getMasteryStats();
+  const avgMastery = masteryStats.avgMastery;
   const dueCount = getDueQuestions().length;
   const weakCount = getWeakQuestions().length;
   const dailyProgress = stats?.dailyGoalProgress ?? 0;
@@ -157,20 +159,64 @@ export default function DashboardPage() {
           </div>
         </motion.div>
 
-        {/* Visual Chart (nur wenn Fragen beantwortet) */}
+        {/* Mastery Score Widget */}
         {hasAnswered && (
           <motion.div variants={fadeUp}>
-            <Card className="border-border/30 bg-card/50 backdrop-blur-xl">
-              <CardContent className="p-5 flex flex-col items-center">
-                <DashboardVisual
-                  hfData={(["HF1", "HF2", "HF3", "HF4"] as Handlungsfeld[]).map((hf) => {
-                    const p = getHFProgress(hf);
-                    return { hf, label: HANDLUNGSFELDER[hf].title, ...p };
-                  })}
-                  overallCorrectRate={overall.correctRate}
-                  totalMastered={overall.mastered}
-                  totalQuestions={overall.total}
+            <Card className="border-border/30 bg-card/50 backdrop-blur-xl overflow-hidden">
+              <CardContent className="p-5 relative">
+                {/* Animated glow */}
+                <motion.div
+                  className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-36 h-36 rounded-full blur-3xl pointer-events-none"
+                  style={{ background: `radial-gradient(circle, ${avgMastery >= 80 ? "rgba(34,197,94,0.3)" : avgMastery >= 60 ? "rgba(52,211,153,0.25)" : avgMastery >= 40 ? "rgba(234,179,8,0.25)" : avgMastery >= 20 ? "rgba(249,115,22,0.2)" : "rgba(239,68,68,0.2)"}, transparent)` }}
+                  animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
+                  transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
                 />
+
+                <div className="relative flex items-center justify-center gap-6">
+                  {/* Score Ring */}
+                  <motion.div initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: "spring", stiffness: 120, delay: 0.15 }}>
+                    <ProgressRing progress={avgMastery} size={110} strokeWidth={8}>
+                      <div className="text-center">
+                        <motion.span
+                          className={`text-3xl font-black ${avgMastery >= 80 ? "text-success" : avgMastery >= 60 ? "text-emerald-400" : avgMastery >= 40 ? "text-warning" : avgMastery >= 20 ? "text-orange-500" : "text-destructive"}`}
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          transition={{ type: "spring", delay: 0.3 }}
+                        >
+                          <AnimatedCounter value={avgMastery} />
+                        </motion.span>
+                        <p className="text-[9px] text-muted-foreground mt-0.5">Lern-Score</p>
+                      </div>
+                    </ProgressRing>
+                  </motion.div>
+
+                  {/* Right side info */}
+                  <div className="space-y-2">
+                    <div>
+                      <p className="text-sm font-bold">
+                        {avgMastery >= 80 ? "Prüfungsreif!" : avgMastery >= 60 ? "Fast geschafft!" : avgMastery >= 40 ? "Auf gutem Weg" : avgMastery >= 20 ? "Weitermachen!" : "Los geht's!"}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                        {masteryStats.mastered + masteryStats.secure} von {masteryStats.totalQuestions} sicher
+                      </p>
+                    </div>
+                    {/* Mini HF bars */}
+                    <div className="space-y-1 w-32">
+                      {(["HF1", "HF2", "HF3", "HF4"] as Handlungsfeld[]).map((hf) => {
+                        const p = getHFProgress(hf);
+                        const pct = p.total > 0 ? Math.round(((p.mastered + p.inProgress) / p.total) * 100) : 0;
+                        return (
+                          <div key={hf} className="flex items-center gap-1.5">
+                            <span className="text-[8px] text-muted-foreground w-6">{hf}</span>
+                            <div className="flex-1 h-1.5 bg-muted/30 rounded-full overflow-hidden">
+                              <div className={`h-full rounded-full ${pct >= 70 ? "bg-success" : pct >= 40 ? "bg-warning" : "bg-destructive/60"}`} style={{ width: `${pct}%` }} />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </motion.div>
