@@ -140,18 +140,18 @@ function LernenContent() {
     if (correct) setSessionCorrect((prev) => prev + 1);
     else setSessionWrong((prev) => prev + 1);
 
+    // Update stats after EVERY answer (not just session end)
+    await updateStats({
+      xp: (stats?.xp ?? 0) + xp,
+      totalQuestionsAnswered: (stats?.totalQuestionsAnswered ?? 0) + 1,
+      totalCorrect: (stats?.totalCorrect ?? 0) + (correct ? 1 : 0),
+      dailyGoalProgress: (stats?.dailyGoalProgress ?? 0) + 1,
+      lastActiveDate: new Date().toISOString().split("T")[0],
+    });
+
     // Move to next or finish
     if (currentIndex + 1 >= sessionQuestions.length) {
       setSessionComplete(true);
-      // Update user stats
-      const totalAnswered = sessionCorrect + sessionWrong + 1;
-      await updateStats({
-        xp: (stats?.xp ?? 0) + sessionXP + xp,
-        totalQuestionsAnswered: (stats?.totalQuestionsAnswered ?? 0) + totalAnswered,
-        totalCorrect: (stats?.totalCorrect ?? 0) + sessionCorrect + (correct ? 1 : 0),
-        dailyGoalProgress: (stats?.dailyGoalProgress ?? 0) + totalAnswered,
-        lastActiveDate: new Date().toISOString().split("T")[0],
-      });
     } else {
       setCurrentIndex((prev) => prev + 1);
     }

@@ -182,7 +182,8 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {(Object.entries(HANDLUNGSFELDER) as [Handlungsfeld, typeof HANDLUNGSFELDER.HF1][]).map(([hf, info]) => {
             const hfProgress = getHFProgress(hf);
-            const percent = hfProgress.total > 0 ? Math.round((hfProgress.mastered / hfProgress.total) * 100) : 0;
+            const seen = hfProgress.mastered + hfProgress.inProgress;
+            const percent = hfProgress.total > 0 ? Math.round((seen / hfProgress.total) * 100) : 0;
             const Icon = HF_ICONS[info.icon] ?? BookOpen;
             return (
               <motion.div key={hf} variants={fadeUp} whileHover={{ y: -2, scale: 1.01 }} whileTap={{ scale: 0.98 }}>
@@ -201,7 +202,7 @@ export default function DashboardPage() {
                       </div>
                       <div className="mt-3 space-y-1.5">
                         <div className="flex items-center justify-between text-[10px]">
-                          <span className="text-muted-foreground">{hfProgress.mastered} gemeistert · {hfProgress.notStarted} neu</span>
+                          <span className="text-muted-foreground">{seen} von {hfProgress.total} bearbeitet</span>
                           <span className="font-medium">{percent}%</span>
                         </div>
                         <Progress value={percent} className="h-1" />
