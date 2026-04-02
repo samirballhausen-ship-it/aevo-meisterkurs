@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { HANDLUNGSFELDER, type Handlungsfeld, type SessionMode, LEVELS } from "@/lib/types";
-import { getQuestionById } from "@/lib/questions";
+import { getQuestionById, questions } from "@/lib/questions";
 import {
   Zap,
   BookOpen,
@@ -29,6 +29,7 @@ import {
   ChevronLeft,
   ChevronRight,
   SkipForward,
+  PenLine,
 } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
@@ -99,6 +100,15 @@ function LernenContent() {
         // Nur neue Fragen: 20 zufällige noch nie beantwortete Fragen
         const unbeantwortet = getNewQuestions(hf, 200);
         questionIds = unbeantwortet.sort(() => Math.random() - 0.5).slice(0, 20);
+        break;
+      }
+      case "openOnly": {
+        // Smart Algorithm nur für offene Fragen (Freitext)
+        questionIds = getSmartQuestions(hf, 20, "open");
+        if (questionIds.length === 0) {
+          const openIds = questions.filter((q) => q.type === "open" && (!hf || q.handlungsfeld === hf)).map((q) => q.id);
+          questionIds = openIds.sort(() => Math.random() - 0.5).slice(0, 20);
+        }
         break;
       }
       case "exam": {
@@ -234,6 +244,13 @@ function LernenContent() {
                 title: "Schwächen gezielt üben",
                 desc: "Fragen mit niedrigem Mastery-Score — da wo du am meisten lernst",
                 accent: "text-orange-500",
+              },
+              {
+                mode: "openOnly" as SessionMode,
+                icon: PenLine,
+                title: "Nur offene Fragen",
+                desc: "Freitext-Fragen mit Smart-Algorithmus — perfekt für die schriftliche Prüfung",
+                accent: "text-violet-500",
               },
             ].map((opt) => (
               <Card

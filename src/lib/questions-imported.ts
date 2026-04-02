@@ -1178,7 +1178,7 @@ export const importedQuestions: Question[] = [...versandFragen, ...finaleFragen,
     ],
     correctAnswer: 2,
     explanation: "Bei nachgewiesener Behinderung (z.B. Legasthenie) besteht Anspruch auf Nachteilsausgleich wie Zeitzuschlag oder Hilfsmittel.",
-    hint: "Prüfungsausschuss: Mindestens 3 Mitglieder (AG + AN + Lehrer). Berufung: max. 5 Jahre. Beschlüsse: Mehrheit entscheidet.",
+    hint: "Nachteilsausgleich: Bei Legasthenie, Dyskalkulie etc. hat der Azubi RECHT auf Ausgleich (z.B. mehr Prüfungszeit). Absagen ist KEINE Option — Inklusion statt Ausschluss!",
     tags: ["Prüfung"],
   },
   {

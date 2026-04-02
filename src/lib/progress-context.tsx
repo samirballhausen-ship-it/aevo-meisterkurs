@@ -126,7 +126,7 @@ interface ProgressContextValue {
   getDueQuestions: (hf?: Handlungsfeld) => string[];
   getNewQuestions: (hf?: Handlungsfeld, count?: number) => string[];
   getWeakQuestions: (count?: number) => string[];
-  getSmartQuestions: (hf?: Handlungsfeld, count?: number) => string[];
+  getSmartQuestions: (hf?: Handlungsfeld, count?: number, typeFilter?: "mc" | "open") => string[];
   getHFProgress: (hf: Handlungsfeld) => { total: number; mastered: number; inProgress: number; notStarted: number; correctRate: number };
   getOverallProgress: () => { total: number; mastered: number; correctRate: number };
   getMasteryStats: () => MasteryStats;
@@ -251,10 +251,11 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
 
   // ─── Smart Question Selection ──────────────────────────────────────────────
 
-  const getSmartQuestions = useCallback((hf?: Handlungsfeld, count = 20) => {
+  const getSmartQuestions = useCallback((hf?: Handlungsfeld, count = 20, typeFilter?: "mc" | "open") => {
     const now = Date.now();
     const candidates = questions
       .filter((q) => !hf || q.handlungsfeld === hf)
+      .filter((q) => !typeFilter || q.type === typeFilter)
       .map((q) => {
         const p = progress.get(q.id);
 
