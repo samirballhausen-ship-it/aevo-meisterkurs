@@ -442,8 +442,14 @@ function LernenContent() {
   const examSeconds = examTimer % 60;
   const examUrgent = examTimer < 300; // under 5 min
 
+  // Can navigate to: any answered question, or the current active (next unanswered)
+  const activeIdx = nextUnanswered === -1 ? sessionQuestions.length - 1 : nextUnanswered;
+  const canGoTo = (i: number) => sessionAnswers[i] != null || i === activeIdx;
+  const canGoPrev = currentIndex > 0 && canGoTo(currentIndex - 1);
+  const canGoNext = currentIndex < sessionQuestions.length - 1 && canGoTo(currentIndex + 1);
+
   return (
-    <div className="min-h-screen pb-6">
+    <div className="min-h-screen pb-28">
       <NavBar hideOnMobile />
       <main className="max-w-2xl mx-auto px-4 md:px-6 py-4 md:py-6 space-y-4">
         {/* Session Header */}
@@ -483,33 +489,6 @@ function LernenContent() {
         {/* Progress Bar */}
         <Progress value={progressPercent} className={cn("h-1.5", isExam && "[&>div]:bg-destructive")} />
 
-        {/* Question Stepper Dots */}
-        <div className="flex items-center gap-1 justify-center flex-wrap px-2">
-          {sessionQuestions.map((_, i) => {
-            const answer = sessionAnswers[i];
-            const isCurrent = i === currentIndex;
-            const canClick = answer != null || i === (nextUnanswered === -1 ? sessionQuestions.length - 1 : nextUnanswered);
-            return (
-              <button
-                key={i}
-                onClick={() => canClick && setCurrentIndex(i)}
-                disabled={!canClick && !isCurrent}
-                className={cn(
-                  "h-2 w-2 rounded-full transition-all shrink-0",
-                  isCurrent && "ring-[1.5px] ring-primary ring-offset-1 ring-offset-background scale-125",
-                  answer?.correct === true && "bg-success",
-                  answer?.correct === false && "bg-destructive",
-                  answer == null && !isCurrent && "bg-muted/50",
-                  answer == null && isCurrent && "bg-primary",
-                  canClick && !isCurrent && "cursor-pointer hover:scale-150",
-                  !canClick && !isCurrent && "cursor-default",
-                )}
-                title={`Frage ${i + 1}${answer ? (answer.correct ? " ✓" : " ✗") : ""}`}
-              />
-            );
-          })}
-        </div>
-
         {/* Question or Review */}
         <AnimatePresence mode="wait">
           {isReviewMode ? (
@@ -531,49 +510,85 @@ function LernenContent() {
             />
           )}
         </AnimatePresence>
+      </main>
 
-        {/* Review Navigation */}
-        {isReviewMode && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex items-center justify-between gap-2"
-          >
+      {/* ═══ Fixed Bottom Navigation Bar ═══ */}
+      <div className="fixed bottom-0 inset-x-0 z-40 bg-background/80 backdrop-blur-xl border-t border-border/30 safe-area-pb">
+        <div className="max-w-2xl mx-auto px-3 py-2 space-y-2">
+          {/* Dot Stepper */}
+          <div className="flex items-center gap-[5px] justify-center overflow-x-auto py-1 scrollbar-hide">
+            {sessionQuestions.map((_, i) => {
+              const answer = sessionAnswers[i];
+              const isCurrent = i === currentIndex;
+              const clickable = canGoTo(i);
+              return (
+                <button
+                  key={i}
+                  onClick={() => clickable && setCurrentIndex(i)}
+                  disabled={!clickable && !isCurrent}
+                  className={cn(
+                    "rounded-full transition-all shrink-0",
+                    isCurrent ? "h-3 w-3 ring-2 ring-primary ring-offset-1 ring-offset-background" : "h-2 w-2",
+                    answer?.correct === true && "bg-success",
+                    answer?.correct === false && "bg-destructive",
+                    answer == null && !isCurrent && "bg-muted/40",
+                    answer == null && isCurrent && "bg-primary",
+                    clickable && !isCurrent && "cursor-pointer active:scale-150",
+                  )}
+                  title={`Frage ${i + 1}`}
+                />
+              );
+            })}
+          </div>
+
+          {/* Prev / Status / Next */}
+          <div className="flex items-center justify-between gap-2">
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setCurrentIndex((p) => p - 1)}
-              disabled={currentIndex === 0}
-              className="text-xs"
+              disabled={!canGoPrev}
+              className="text-xs h-8 px-2"
             >
-              <ChevronLeft className="mr-1 h-3.5 w-3.5" />
-              Vorherige
+              <ChevronLeft className="h-4 w-4" />
             </Button>
 
-            {nextUnanswered !== -1 && (
-              <Button
-                size="sm"
-                onClick={() => setCurrentIndex(nextUnanswered)}
-                className="rounded-xl text-xs"
-              >
-                <SkipForward className="mr-1 h-3.5 w-3.5" />
-                Weiter lernen ({nextUnanswered + 1}/{sessionQuestions.length})
-              </Button>
-            )}
+            <div className="flex-1 text-center">
+              {isReviewMode ? (
+                nextUnanswered !== -1 ? (
+                  <Button
+                    size="sm"
+                    onClick={() => setCurrentIndex(nextUnanswered)}
+                    className="rounded-xl text-xs h-8"
+                  >
+                    <SkipForward className="mr-1 h-3.5 w-3.5" />
+                    Weiter lernen ({nextUnanswered + 1}/{sessionQuestions.length})
+                  </Button>
+                ) : (
+                  <span className="text-xs text-muted-foreground">
+                    Alle {sessionQuestions.length} Fragen beantwortet
+                  </span>
+                )
+              ) : (
+                <span className="text-xs text-muted-foreground tabular-nums">
+                  Frage {currentIndex + 1} von {sessionQuestions.length}
+                  {answeredCount > 0 && ` · ${answeredCount} beantwortet`}
+                </span>
+              )}
+            </div>
 
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setCurrentIndex((p) => p + 1)}
-              disabled={currentIndex >= answeredCount - 1 && nextUnanswered !== currentIndex + 1}
-              className="text-xs"
+              disabled={!canGoNext}
+              className="text-xs h-8 px-2"
             >
-              Nächste
-              <ChevronRight className="ml-1 h-3.5 w-3.5" />
+              <ChevronRight className="h-4 w-4" />
             </Button>
-          </motion.div>
-        )}
-      </main>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
