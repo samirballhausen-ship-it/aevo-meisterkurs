@@ -37,7 +37,7 @@ function LernenContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { user, stats, updateStats, loading: authLoading } = useAuth();
-  const { getDueQuestions, getNewQuestions, getWeakQuestions, recordAnswer } = useProgress();
+  const { getDueQuestions, getNewQuestions, getWeakQuestions, getSmartQuestions, recordAnswer } = useProgress();
 
   const [mode, setMode] = useState<SessionMode | null>(null);
   const [selectedHF, setSelectedHF] = useState<Handlungsfeld | undefined>(undefined);
@@ -76,29 +76,32 @@ function LernenContent() {
 
     switch (sessionMode) {
       case "spaced": {
-        const due = getDueQuestions(hf);
-        const newQ = getNewQuestions(hf, 10);
-        questionIds = [...due.slice(0, 15), ...newQ].slice(0, 20);
+        // Smart Algorithm: prioritizes by effective mastery + confidence + decay
+        questionIds = getSmartQuestions(hf, 20);
         break;
       }
       case "handlungsfeld": {
-        const due = getDueQuestions(hf);
-        const newQ = getNewQuestions(hf, 20);
-        questionIds = [...due, ...newQ].slice(0, 20);
+        // Smart selection filtered to specific HF
+        questionIds = getSmartQuestions(hf, 20);
         break;
       }
       case "weakTopics": {
+        // Weakness-focused: only low effective mastery questions
         questionIds = getWeakQuestions(20);
+        if (questionIds.length < 10) {
+          // Pad with smart questions if not enough weak ones
+          const extra = getSmartQuestions(hf, 20 - questionIds.length);
+          questionIds = [...questionIds, ...extra.filter((id) => !questionIds.includes(id))].slice(0, 20);
+        }
         break;
       }
       case "random": {
-        // 20 zufällige noch unbeantwortete Fragen
-        const unbeantwortet = getNewQuestions(hf, 200);
-        questionIds = unbeantwortet.sort(() => Math.random() - 0.5).slice(0, 20);
+        // Weighted random: lower effective mastery = more likely to appear
+        questionIds = getSmartQuestions(hf, 20);
         break;
       }
       case "exam": {
-        // Prüfungs-Simulation: 30 zufällige Fragen aus ALLEN Typen (MC + Open)
+        // Prüfungs-Simulation: 30 questions, truly random (simulates real exam)
         const all = getNewQuestions(undefined, 200);
         const due = getDueQuestions();
         const combined = [...new Set([...all, ...due])];
@@ -107,7 +110,7 @@ function LernenContent() {
       }
     }
 
-    // Fallback: if no due/weak questions, get new ones
+    // Fallback: if no questions found, get new ones
     if (questionIds.length === 0) {
       questionIds = getNewQuestions(hf, 20);
     }
@@ -121,7 +124,7 @@ function LernenContent() {
     setSessionComplete(false);
     setStreak(0);
     setMode(sessionMode);
-  }, [getDueQuestions, getNewQuestions, getWeakQuestions]);
+  }, [getDueQuestions, getNewQuestions, getWeakQuestions, getSmartQuestions]);
 
   const handleAnswer = useCallback(async (correct: boolean, responseTime: number, partial?: boolean) => {
     const questionId = sessionQuestions[currentIndex];
@@ -213,22 +216,22 @@ function LernenContent() {
               {
                 mode: "spaced" as SessionMode,
                 icon: Zap,
-                title: "Tägliches Lernen",
-                desc: "Die App wählt die richtigen Fragen für dich aus (empfohlen)",
+                title: "Smart Sprint",
+                desc: "KI-Algorithmus wählt Fragen nach Mastery, Confidence und Zeitverfall (empfohlen)",
                 accent: "text-primary",
               },
               {
                 mode: "random" as SessionMode,
                 icon: BookOpen,
-                title: "Neue Fragen Sprint",
-                desc: "20 zufällige Fragen die du noch nicht beantwortet hast",
+                title: "Adaptive Mischung",
+                desc: "Schwache Fragen + neue Entdeckungen, gewichtet nach deinem Lernstand",
                 accent: "text-emerald-500",
               },
               {
                 mode: "weakTopics" as SessionMode,
                 icon: Brain,
-                title: "Unsichere Fragen üben",
-                desc: "Wiederhole Fragen die du oft falsch beantwortest",
+                title: "Schwächen gezielt üben",
+                desc: "Fragen mit niedrigem Mastery-Score — da wo du am meisten lernst",
                 accent: "text-orange-500",
               },
             ].map((opt) => (

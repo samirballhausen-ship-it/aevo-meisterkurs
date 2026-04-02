@@ -59,6 +59,12 @@ export const LEITNER_INTERVALS: Record<LeitnerBox, number> = {
   5: 30,       // 30 Tage (gemeistert)
 };
 
+export interface AttemptRecord {
+  ts: number;   // timestamp
+  c: boolean;   // correct
+  t: number;    // responseTime (seconds)
+}
+
 export interface QuestionProgress {
   questionId: string;
   box: LeitnerBox;
@@ -67,6 +73,11 @@ export interface QuestionProgress {
   timesCorrect: number;
   timesWrong: number;
   avgResponseTime: number;
+  // Adaptive Mastery System
+  mastery?: number;            // 0-100 composite score
+  history?: AttemptRecord[];   // last 5 attempts (newest first)
+  streak?: number;             // consecutive correct
+  confidence?: number;         // 0-1 based on total attempts
 }
 
 // ─── Gamification Types ─────────────────────────────────────────────────────
