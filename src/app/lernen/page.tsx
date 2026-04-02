@@ -458,11 +458,11 @@ function LernenContent() {
   const examSeconds = examTimer % 60;
   const examUrgent = examTimer < 300; // under 5 min
 
-  // Can navigate to: any answered question, or the current active (next unanswered)
+  // Navigation: can browse all questions freely (answered = review, unanswered = preview)
   const activeIdx = nextUnanswered === -1 ? sessionQuestions.length - 1 : nextUnanswered;
-  const canGoTo = (i: number) => sessionAnswers[i] != null || i === activeIdx;
-  const canGoPrev = currentIndex > 0 && canGoTo(currentIndex - 1);
-  const canGoNext = currentIndex < sessionQuestions.length - 1 && canGoTo(currentIndex + 1);
+  const canGoTo = (_i: number) => true;
+  const canGoPrev = currentIndex > 0;
+  const canGoNext = currentIndex < sessionQuestions.length - 1;
 
   return (
     <div className="min-h-screen pb-28">
@@ -598,17 +598,8 @@ function LernenContent() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => {
-                // Smart: skip to active question if next step would be unanswered
-                if (isReviewMode && nextUnanswered !== -1 && currentIndex + 1 === activeIdx) {
-                  setCurrentIndex(activeIdx);
-                } else if (isReviewMode && nextUnanswered !== -1 && !canGoTo(currentIndex + 1)) {
-                  setCurrentIndex(activeIdx);
-                } else {
-                  setCurrentIndex((p) => p + 1);
-                }
-              }}
-              disabled={!canGoNext && !(isReviewMode && nextUnanswered !== -1)}
+              onClick={() => setCurrentIndex((p) => p + 1)}
+              disabled={!canGoNext}
               className="text-xs h-8 px-2"
             >
               <ChevronRight className="h-4 w-4" />
