@@ -12,7 +12,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { HANDLUNGSFELDER, type Handlungsfeld, type SessionMode, LEVELS } from "@/lib/types";
+import { HANDLUNGSFELDER, type Handlungsfeld, type SessionMode, LEVELS, ACHIEVEMENTS } from "@/lib/types";
 import { getQuestionById, questions } from "@/lib/questions";
 import {
   Zap,
@@ -38,7 +38,7 @@ function LernenContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { user, stats, updateStats, loading: authLoading } = useAuth();
-  const { getDueQuestions, getNewQuestions, getWeakQuestions, getSmartQuestions, recordAnswer } = useProgress();
+  const { getDueQuestions, getNewQuestions, getWeakQuestions, getSmartQuestions, getHFProgress, recordAnswer } = useProgress();
 
   const [mode, setMode] = useState<SessionMode | null>(null);
   const [selectedHF, setSelectedHF] = useState<Handlungsfeld | undefined>(undefined);
@@ -165,14 +165,66 @@ function LernenContent() {
     if (correct) setSessionCorrect((prev) => prev + 1);
     else setSessionWrong((prev) => prev + 1);
 
-    // Update stats after EVERY answer (not just session end)
+    // Check achievements
+    const existing = stats?.achievements ?? [];
+    const newAchievements: string[] = [];
+    const totalAnsweredNow = (stats?.totalQuestionsAnswered ?? 0) + 1;
+    const newStreak2 = correct ? streak + 1 : 0;
+    const now = new Date();
+    const isWeekend = now.getDay() === 0 || now.getDay() === 6;
+    const isNight = now.getHours() >= 22;
+
+    if (!existing.includes("first-step") && totalAnsweredNow >= 1) newAchievements.push("first-step");
+    if (!existing.includes("hundred-club") && totalAnsweredNow >= 100) newAchievements.push("hundred-club");
+    if (!existing.includes("ten-streak") && newStreak2 >= 10) newAchievements.push("ten-streak");
+    if (!existing.includes("speed-demon") && correct && responseTime < 5) {
+      // Count fast correct answers in this session
+      const fastCount = sessionAnswers.filter((a) => a?.correct).length + (correct ? 1 : 0);
+      if (fastCount >= 10) newAchievements.push("speed-demon");
+    }
+    if (!existing.includes("night-owl") && isNight) newAchievements.push("night-owl");
+    if (!existing.includes("weekend-warrior") && isWeekend) newAchievements.push("weekend-warrior");
+    if (!existing.includes("week-streak") && (stats?.currentStreak ?? 0) >= 7) newAchievements.push("week-streak");
+
+    // HF completion checks
+    const hfList: Handlungsfeld[] = ["HF1", "HF2", "HF3", "HF4"];
+    for (const hf of hfList) {
+      const achId = `${hf.toLowerCase()}-clear`;
+      if (!existing.includes(achId)) {
+        const hfProg = getHFProgress(hf);
+        if (hfProg.total > 0 && hfProg.mastered + hfProg.inProgress >= hfProg.total && hfProg.correctRate >= 0.6) {
+          newAchievements.push(achId);
+        }
+      }
+    }
+
+    // Exam ready: all HFs > 80% correct
+    if (!existing.includes("exam-ready")) {
+      const allGood = hfList.every((hf) => {
+        const p = getHFProgress(hf);
+        return p.correctRate >= 0.8;
+      });
+      if (allGood && totalAnsweredNow > 50) newAchievements.push("exam-ready");
+    }
+
+    // Update stats after EVERY answer
+    const updatedAchievements = [...existing, ...newAchievements];
     await updateStats({
       xp: (stats?.xp ?? 0) + xp,
-      totalQuestionsAnswered: (stats?.totalQuestionsAnswered ?? 0) + 1,
+      totalQuestionsAnswered: totalAnsweredNow,
       totalCorrect: (stats?.totalCorrect ?? 0) + (correct ? 1 : 0),
       dailyGoalProgress: (stats?.dailyGoalProgress ?? 0) + 1,
-      lastActiveDate: new Date().toISOString().split("T")[0],
+      lastActiveDate: now.toISOString().split("T")[0],
+      ...(newAchievements.length > 0 ? { achievements: updatedAchievements } : {}),
     });
+
+    // Perfect session check (at end of session)
+    if (currentIndex + 1 >= sessionQuestions.length) {
+      const allCorrect = sessionAnswers.every((a) => a?.correct) && correct;
+      if (allCorrect && !updatedAchievements.includes("perfect-session")) {
+        await updateStats({ achievements: [...updatedAchievements, "perfect-session"] });
+      }
+    }
 
     // Move to next or finish
     if (currentIndex + 1 >= sessionQuestions.length) {
@@ -180,7 +232,7 @@ function LernenContent() {
     } else {
       setCurrentIndex((prev) => prev + 1);
     }
-  }, [sessionQuestions, currentIndex, recordAnswer, streak, stats, updateStats, sessionCorrect, sessionWrong, sessionXP]);
+  }, [sessionQuestions, currentIndex, recordAnswer, streak, stats, updateStats, sessionCorrect, sessionWrong, sessionXP, sessionAnswers, getHFProgress]);
 
   const currentQuestion = useMemo(() => {
     if (sessionQuestions.length === 0) return null;
