@@ -402,6 +402,120 @@ function QuestionHeader({ question, num, total }: { question: Question; num: num
 // Main Export – Routes to MC or Open
 // ═══════════════════════════════════════════════════════════════════════════
 
+// ═══════════════════════════════════════════════════════════════════════════
+// Review Card – Read-only view of previously answered questions
+// ═══════════════════════════════════════════════════════════════════════════
+
+interface ReviewCardProps {
+  question: Question;
+  correct: boolean;
+  questionNumber: number;
+  totalQuestions: number;
+}
+
+export function ReviewCard({ question, correct, questionNumber, totalQuestions }: ReviewCardProps) {
+  const correctIdx = question.correctAnswer as number;
+  const hasExplanation = question.explanation && !question.explanation.startsWith("Die richtige Antwort ergibt sich");
+
+  return (
+    <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.25 }}>
+      <Card className="border-border/30 bg-card/50 backdrop-blur-xl shadow-lg shadow-primary/5">
+        <CardContent className="p-5 md:p-6 space-y-4">
+          {/* Header + Result Badge */}
+          <div className="flex items-center justify-between">
+            <QuestionHeader question={question} num={questionNumber} total={totalQuestions} />
+            <Badge
+              className={cn(
+                "text-xs gap-1",
+                correct
+                  ? "bg-success/15 text-success border-success/30"
+                  : "bg-destructive/15 text-destructive border-destructive/30"
+              )}
+              variant="outline"
+            >
+              {correct ? <CheckCircle2 className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
+              {correct ? "Richtig" : "Falsch"}
+            </Badge>
+          </div>
+
+          {question.context && (
+            <div className="rounded-lg bg-muted/50 p-3 text-sm text-muted-foreground border border-border/30">
+              <p className="italic">{question.context}</p>
+            </div>
+          )}
+
+          <h2 className="text-base md:text-lg font-semibold leading-relaxed">{question.prompt}</h2>
+
+          {/* MC Options (correct highlighted) */}
+          {question.type !== "open" && (
+            <div className="space-y-2">
+              {(question.options ?? []).map((option, i) => (
+                <div
+                  key={i}
+                  className={cn(
+                    "p-3 rounded-xl border flex items-start gap-3 text-sm",
+                    i === correctIdx && "border-success/50 bg-success/10",
+                    i !== correctIdx && "border-border/20 opacity-40",
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "shrink-0 h-6 w-6 rounded-full flex items-center justify-center text-xs font-medium border",
+                      i === correctIdx ? "border-success bg-success text-success-foreground" : "border-border bg-muted text-muted-foreground",
+                    )}
+                  >
+                    {i === correctIdx ? <CheckCircle2 className="h-4 w-4" /> : String.fromCharCode(65 + i)}
+                  </span>
+                  <span className="flex-1 leading-relaxed">{option}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Open question solution */}
+          {question.type === "open" && (question.solution || question.explanation) && (
+            <div className="rounded-xl bg-primary/5 border border-primary/20 p-4">
+              <p className="text-sm font-medium mb-2">Musterantwort</p>
+              <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">
+                {question.solution || question.explanation}
+              </p>
+              {question.solutionPoints && question.solutionPoints.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mt-3">
+                  {question.solutionPoints.map((p) => (
+                    <Badge key={p} variant="secondary" className="text-[10px]">{p}</Badge>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Explanation */}
+          {hasExplanation && (
+            <div className={cn("rounded-xl border p-4", correct ? "bg-success/5 border-success/20" : "bg-primary/5 border-primary/10")}>
+              <div className="flex items-start gap-3">
+                <div className={cn("h-8 w-8 rounded-lg flex items-center justify-center shrink-0", correct ? "bg-success/10" : "bg-primary/10")}>
+                  {correct ? <CheckCircle2 className="h-4 w-4 text-success" /> : <Lightbulb className="h-4 w-4 text-primary" />}
+                </div>
+                <div>
+                  <p className="text-sm font-medium mb-1">{correct ? "Richtig beantwortet" : "Erklärung"}</p>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{question.explanation}</p>
+                  {question.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mt-3">
+                      {question.tags.map((tag) => <Badge key={tag} variant="outline" className="text-[10px]">{tag}</Badge>)}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          <ReportButton questionId={question.id} questionPrompt={question.prompt} />
+        </CardContent>
+      </Card>
+    </motion.div>
+  );
+}
+
 export function QuestionCard(props: QuestionCardProps) {
   return (
     <motion.div

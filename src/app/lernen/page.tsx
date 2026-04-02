@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
 import { useProgress } from "@/lib/progress-context";
 import { NavBar } from "@/components/nav-bar";
-import { QuestionCard } from "@/components/question-card";
+import { QuestionCard, ReviewCard } from "@/components/question-card";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -26,10 +26,12 @@ import {
   CheckCircle2,
   XCircle,
   Sparkles,
+  ChevronLeft,
+  ChevronRight,
+  SkipForward,
 } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
-import { BookOpen as BookOpenIcon } from "lucide-react";
 
 function LernenContent() {
   const searchParams = useSearchParams();
@@ -47,6 +49,7 @@ function LernenContent() {
   const [sessionComplete, setSessionComplete] = useState(false);
   const [streak, setStreak] = useState(0);
   const [sessionStartTime] = useState(Date.now());
+  const [sessionAnswers, setSessionAnswers] = useState<({ correct: boolean } | null)[]>([]);
   const [examTimer, setExamTimer] = useState(60 * 60); // 60 min in seconds
 
   // Parse URL params
@@ -110,6 +113,7 @@ function LernenContent() {
     }
 
     setSessionQuestions(questionIds);
+    setSessionAnswers(new Array(questionIds.length).fill(null));
     setCurrentIndex(0);
     setSessionCorrect(0);
     setSessionWrong(0);
@@ -122,6 +126,13 @@ function LernenContent() {
   const handleAnswer = useCallback(async (correct: boolean, responseTime: number, partial?: boolean) => {
     const questionId = sessionQuestions[currentIndex];
     await recordAnswer(questionId, correct, responseTime);
+
+    // Track answer for session navigation
+    setSessionAnswers((prev) => {
+      const next = [...prev];
+      next[currentIndex] = { correct };
+      return next;
+    });
 
     // XP calculation – partial answers get half XP
     let xp = correct ? (partial ? 5 : 10) : 2;
@@ -422,7 +433,10 @@ function LernenContent() {
     );
   }
 
-  const progressPercent = ((currentIndex + 1) / sessionQuestions.length) * 100;
+  const isReviewMode = sessionAnswers[currentIndex] != null;
+  const nextUnanswered = sessionAnswers.findIndex((a) => a == null);
+  const answeredCount = sessionAnswers.filter((a) => a != null).length;
+  const progressPercent = (answeredCount / sessionQuestions.length) * 100;
   const isExam = mode === "exam";
   const examMinutes = Math.floor(examTimer / 60);
   const examSeconds = examTimer % 60;
@@ -469,17 +483,96 @@ function LernenContent() {
         {/* Progress Bar */}
         <Progress value={progressPercent} className={cn("h-1.5", isExam && "[&>div]:bg-destructive")} />
 
-        {/* Question */}
+        {/* Question Stepper Dots */}
+        <div className="flex items-center gap-1 justify-center flex-wrap px-2">
+          {sessionQuestions.map((_, i) => {
+            const answer = sessionAnswers[i];
+            const isCurrent = i === currentIndex;
+            const canClick = answer != null || i === (nextUnanswered === -1 ? sessionQuestions.length - 1 : nextUnanswered);
+            return (
+              <button
+                key={i}
+                onClick={() => canClick && setCurrentIndex(i)}
+                disabled={!canClick && !isCurrent}
+                className={cn(
+                  "h-2 w-2 rounded-full transition-all shrink-0",
+                  isCurrent && "ring-[1.5px] ring-primary ring-offset-1 ring-offset-background scale-125",
+                  answer?.correct === true && "bg-success",
+                  answer?.correct === false && "bg-destructive",
+                  answer == null && !isCurrent && "bg-muted/50",
+                  answer == null && isCurrent && "bg-primary",
+                  canClick && !isCurrent && "cursor-pointer hover:scale-150",
+                  !canClick && !isCurrent && "cursor-default",
+                )}
+                title={`Frage ${i + 1}${answer ? (answer.correct ? " ✓" : " ✗") : ""}`}
+              />
+            );
+          })}
+        </div>
+
+        {/* Question or Review */}
         <AnimatePresence mode="wait">
-          <QuestionCard
-            key={currentQuestion.id}
-            question={currentQuestion}
-            onAnswer={handleAnswer}
-            questionNumber={currentIndex + 1}
-            totalQuestions={sessionQuestions.length}
-            examMode={isExam}
-          />
+          {isReviewMode ? (
+            <ReviewCard
+              key={`review-${currentQuestion.id}`}
+              question={currentQuestion}
+              correct={sessionAnswers[currentIndex]!.correct}
+              questionNumber={currentIndex + 1}
+              totalQuestions={sessionQuestions.length}
+            />
+          ) : (
+            <QuestionCard
+              key={currentQuestion.id}
+              question={currentQuestion}
+              onAnswer={handleAnswer}
+              questionNumber={currentIndex + 1}
+              totalQuestions={sessionQuestions.length}
+              examMode={isExam}
+            />
+          )}
         </AnimatePresence>
+
+        {/* Review Navigation */}
+        {isReviewMode && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center justify-between gap-2"
+          >
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setCurrentIndex((p) => p - 1)}
+              disabled={currentIndex === 0}
+              className="text-xs"
+            >
+              <ChevronLeft className="mr-1 h-3.5 w-3.5" />
+              Vorherige
+            </Button>
+
+            {nextUnanswered !== -1 && (
+              <Button
+                size="sm"
+                onClick={() => setCurrentIndex(nextUnanswered)}
+                className="rounded-xl text-xs"
+              >
+                <SkipForward className="mr-1 h-3.5 w-3.5" />
+                Weiter lernen ({nextUnanswered + 1}/{sessionQuestions.length})
+              </Button>
+            )}
+
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setCurrentIndex((p) => p + 1)}
+              disabled={currentIndex >= answeredCount - 1 && nextUnanswered !== currentIndex + 1}
+              className="text-xs"
+            >
+              Nächste
+              <ChevronRight className="ml-1 h-3.5 w-3.5" />
+            </Button>
+          </motion.div>
+        )}
       </main>
     </div>
   );
