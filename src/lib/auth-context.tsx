@@ -91,8 +91,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setStats(FRESH_STATS);
           }
         } catch (err) {
-          console.error("Firestore error:", err);
-          setStats(FRESH_STATS);
+          console.error("Firestore stats error (using local fallback):", err);
+          // Fallback: use localStorage if Firestore fails
+          try {
+            const local = localStorage.getItem("lernapp-stats");
+            setStats(local ? JSON.parse(local) : FRESH_STATS);
+          } catch {
+            setStats(FRESH_STATS);
+          }
         }
       } else {
         if (!localStorage.getItem("lernapp-guest")) {
@@ -110,11 +116,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function handleSignInWithGoogle() {
     const result = await signInWithPopup(auth, googleProvider);
 
-    // Initialize progress if new user
-    const progressRef = doc(db, "users", result.user.uid);
-    const existing = await getDoc(progressRef);
-    if (!existing.exists()) {
-      await setDoc(progressRef, FRESH_STATS);
+    // Initialize progress if new user (don't let Firestore errors block login)
+    try {
+      const progressRef = doc(db, "users", result.user.uid);
+      const existing = await getDoc(progressRef);
+      if (!existing.exists()) {
+        await setDoc(progressRef, FRESH_STATS);
+      }
+    } catch (err) {
+      console.error("Firestore init error (non-blocking):", err);
     }
   }
 
