@@ -523,6 +523,7 @@ function LernenContent() {
             {sessionQuestions.map((_, i) => {
               const answer = sessionAnswers[i];
               const isCurrent = i === currentIndex;
+              const isActive = i === activeIdx && answer == null;
               const clickable = canGoTo(i);
               return (
                 <button
@@ -534,11 +535,12 @@ function LernenContent() {
                     isCurrent ? "h-3 w-3 ring-2 ring-primary ring-offset-1 ring-offset-background" : "h-2 w-2",
                     answer?.correct === true && "bg-success",
                     answer?.correct === false && "bg-destructive",
-                    answer == null && !isCurrent && "bg-muted/40",
+                    answer == null && !isCurrent && !isActive && "bg-muted/40",
                     answer == null && isCurrent && "bg-primary",
+                    isActive && !isCurrent && "bg-primary/70 animate-pulse",
                     clickable && !isCurrent && "cursor-pointer active:scale-150",
                   )}
-                  title={`Frage ${i + 1}`}
+                  title={`Frage ${i + 1}${answer ? (answer.correct ? " ✓" : " ✗") : isActive ? " ← aktiv" : ""}`}
                 />
               );
             })}
@@ -562,10 +564,10 @@ function LernenContent() {
                   <Button
                     size="sm"
                     onClick={() => setCurrentIndex(nextUnanswered)}
-                    className="rounded-xl text-xs h-8"
+                    className="rounded-xl text-xs h-8 bg-primary text-primary-foreground hover:bg-primary/90"
                   >
                     <SkipForward className="mr-1 h-3.5 w-3.5" />
-                    Weiter lernen ({nextUnanswered + 1}/{sessionQuestions.length})
+                    Weiter bei {nextUnanswered + 1}/{sessionQuestions.length}
                   </Button>
                 ) : (
                   <span className="text-xs text-muted-foreground">
@@ -583,8 +585,17 @@ function LernenContent() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setCurrentIndex((p) => p + 1)}
-              disabled={!canGoNext}
+              onClick={() => {
+                // Smart: skip to active question if next step would be unanswered
+                if (isReviewMode && nextUnanswered !== -1 && currentIndex + 1 === activeIdx) {
+                  setCurrentIndex(activeIdx);
+                } else if (isReviewMode && nextUnanswered !== -1 && !canGoTo(currentIndex + 1)) {
+                  setCurrentIndex(activeIdx);
+                } else {
+                  setCurrentIndex((p) => p + 1);
+                }
+              }}
+              disabled={!canGoNext && !(isReviewMode && nextUnanswered !== -1)}
               className="text-xs h-8 px-2"
             >
               <ChevronRight className="h-4 w-4" />
