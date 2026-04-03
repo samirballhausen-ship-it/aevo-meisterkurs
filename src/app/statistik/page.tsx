@@ -250,7 +250,7 @@ export default function StatistikPage() {
               <div className="grid grid-cols-4 gap-2">
                 {[
                   { num: "47%", icon: "🅰️", label: "A richtig", bg: "bg-xp/10 border-xp/25" , numColor: "text-xp" },
-                  { num: "51%", icon: "📏", label: "Längste", bg: "bg-success/10 border-success/25", numColor: "text-success" },
+                  { num: "93%", icon: "📏", label: "2x länger", bg: "bg-success/10 border-success/25", numColor: "text-success" },
                   { num: "71%", icon: "🔗", label: "und+und", bg: "bg-primary/10 border-primary/25", numColor: "text-primary" },
                   { num: "75%", icon: "🚫", label: "kein=falsch", bg: "bg-orange-500/10 border-orange-500/25", numColor: "text-orange-500" },
                 ].map((p) => (
