@@ -54,7 +54,7 @@ function FragenContent() {
   const { progress, getQuestionMastery, recordAnswer } = useProgress();
   const [search, setSearch] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [filter, setFilter] = useState<"all" | "mastered" | "weak" | "new">("all");
+  const [filter, setFilter] = useState<"all" | "sicher" | "streak" | "unsicher" | "new">("all");
   const [sortBy, setSortBy] = useState<"default" | "mastery-asc" | "mastery-desc">("default");
   const [viewMode, setViewMode] = useState<"browse" | "practice">("browse");
 
@@ -84,10 +84,12 @@ function FragenContent() {
           !q.options?.some((o) => o.toLowerCase().includes(s))
         ) return false;
       }
-      const m = getQuestionMastery(q.id);
-      if (filter === "mastered" && (!m || m.mastery < 80)) return false;
-      if (filter === "weak" && (!m || m.mastery >= 60)) return false;
-      if (filter === "new" && m) return false;
+      const qp = progress.get(q.id);
+      const streak = qp?.streak ?? 0;
+      if (filter === "sicher" && (!qp || streak < 3)) return false;
+      if (filter === "streak" && (!qp || streak >= 3 || streak === 0)) return false;  // 1 or 2
+      if (filter === "unsicher" && (!qp || streak > 0)) return false;  // answered but streak 0
+      if (filter === "new" && qp) return false;
       return true;
     })
     .sort((a, b) => {
@@ -97,9 +99,10 @@ function FragenContent() {
       return sortBy === "mastery-asc" ? ma - mb : mb - ma;
     });
 
-  const masteredCount = allQuestions.filter((q) => { const m = getQuestionMastery(q.id); return m && m.mastery >= 80; }).length;
-  const weakCount = allQuestions.filter((q) => { const m = getQuestionMastery(q.id); return m && m.mastery < 60; }).length;
-  const newCount = allQuestions.filter((q) => !getQuestionMastery(q.id)).length;
+  const sicherCount = allQuestions.filter((q) => (progress.get(q.id)?.streak ?? 0) >= 3).length;
+  const streakCount = allQuestions.filter((q) => { const s = progress.get(q.id)?.streak ?? 0; return progress.has(q.id) && s >= 1 && s < 3; }).length;
+  const unsicherCount = allQuestions.filter((q) => { const p = progress.get(q.id); return p && (p.streak ?? 0) === 0; }).length;
+  const newCount = allQuestions.filter((q) => !progress.has(q.id)).length;
 
   // Practice mode: handle answer
   const handlePracticeAnswer = useCallback(async (correct: boolean, responseTime: number) => {
@@ -232,6 +235,45 @@ function FragenContent() {
           </div>
         </div>
 
+        {/* Streak Overview */}
+        {(() => {
+          let s3 = 0, s2 = 0, s1 = 0, s0 = 0, fresh = 0;
+          for (const q of allQuestions) {
+            const p = progress.get(q.id);
+            if (!p) { fresh++; continue; }
+            const streak = p.streak ?? 0;
+            if (streak >= 3) s3++;
+            else if (streak === 2) s2++;
+            else if (streak === 1) s1++;
+            else s0++;
+          }
+          const total = allQuestions.length;
+          return (
+            <div className="grid grid-cols-5 gap-1.5 text-center">
+              <div className="rounded-lg bg-success/10 p-2">
+                <p className="text-lg font-black text-success">{s3}</p>
+                <p className="text-[7px] text-muted-foreground">✓✓✓ sicher</p>
+              </div>
+              <div className="rounded-lg bg-warning/10 p-2">
+                <p className="text-lg font-black text-warning">{s2}</p>
+                <p className="text-[7px] text-muted-foreground">✓✓ fast da</p>
+              </div>
+              <div className="rounded-lg bg-orange-500/10 p-2">
+                <p className="text-lg font-black text-orange-500">{s1}</p>
+                <p className="text-[7px] text-muted-foreground">✓ angefangen</p>
+              </div>
+              <div className="rounded-lg bg-destructive/10 p-2">
+                <p className="text-lg font-black text-destructive">{s0}</p>
+                <p className="text-[7px] text-muted-foreground">✗ unsicher</p>
+              </div>
+              <div className="rounded-lg bg-muted/30 p-2">
+                <p className="text-lg font-black text-muted-foreground">{fresh}</p>
+                <p className="text-[7px] text-muted-foreground">neu</p>
+              </div>
+            </div>
+          );
+        })()}
+
         {/* Mode Toggle + Alle üben */}
         <div className="flex gap-2">
           <div className="flex gap-1 p-1 bg-muted/30 rounded-xl flex-1">
@@ -279,9 +321,10 @@ function FragenContent() {
           <div className="flex gap-2 overflow-x-auto pb-1">
             {[
               { key: "all" as const, label: "Alle", count: allQuestions.length },
+              { key: "sicher" as const, label: "✓✓✓", count: sicherCount },
+              { key: "streak" as const, label: "✓✓/✓", count: streakCount },
+              { key: "unsicher" as const, label: "✗", count: unsicherCount },
               { key: "new" as const, label: "Neu", count: newCount },
-              { key: "weak" as const, label: "Schwach", count: weakCount },
-              { key: "mastered" as const, label: "Gemeistert", count: masteredCount },
             ].map((f) => (
               <Button key={f.key} variant={filter === f.key ? "default" : "outline"} size="sm" className="rounded-full text-xs shrink-0 h-7 px-3" onClick={() => setFilter(f.key)}>
                 {f.label} ({f.count})
@@ -336,17 +379,36 @@ function FragenContent() {
                   >
                     <CardContent className="p-3.5">
                       <div className="flex items-start gap-2.5">
-                        {/* Mastery Circle */}
-                        {mastery ? (
-                          <div className={cn("shrink-0 h-9 w-9 rounded-full flex flex-col items-center justify-center border", getMasteryBg(mastery.mastery))}>
-                            <span className={cn("text-[11px] font-bold leading-none", getMasteryColor(mastery.mastery))}>{mastery.mastery}</span>
-                            <span className="text-[7px] text-muted-foreground leading-none mt-0.5">{mastery.attempts}x</span>
-                          </div>
-                        ) : (
-                          <div className="shrink-0 h-9 w-9 rounded-full flex items-center justify-center border border-muted/50 bg-muted/20">
-                            <span className="text-[10px] text-muted-foreground">neu</span>
-                          </div>
-                        )}
+                        {/* Streak + Mastery Circle */}
+                        {(() => {
+                          const qp = progress.get(q.id);
+                          const streak = qp?.streak ?? 0;
+                          const attempts = qp ? qp.timesCorrect + qp.timesWrong : 0;
+                          if (!qp) return (
+                            <div className="shrink-0 h-9 w-9 rounded-full flex items-center justify-center border border-muted/50 bg-muted/20">
+                              <span className="text-[10px] text-muted-foreground">neu</span>
+                            </div>
+                          );
+                          return (
+                            <div className={cn(
+                              "shrink-0 h-9 w-9 rounded-full flex flex-col items-center justify-center border",
+                              streak >= 3 ? "bg-success/15 border-success/30" :
+                              streak === 2 ? "bg-warning/15 border-warning/30" :
+                              streak === 1 ? "bg-orange-500/15 border-orange-500/30" :
+                              "bg-destructive/15 border-destructive/30",
+                            )}>
+                              <span className={cn(
+                                "text-[10px] font-bold leading-none",
+                                streak >= 3 ? "text-success" : streak === 2 ? "text-warning" : streak === 1 ? "text-orange-500" : "text-destructive",
+                              )}>
+                                {streak >= 3 ? "✓✓✓" : streak === 2 ? "✓✓" : streak === 1 ? "✓" : "✗"}
+                              </span>
+                              <span className="text-[6px] text-muted-foreground leading-none mt-0.5">
+                                {streak >= 3 ? "sicher" : `${streak}/3`}
+                              </span>
+                            </div>
+                          );
+                        })()}
 
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium leading-snug">
@@ -355,6 +417,9 @@ function FragenContent() {
                           <div className="flex items-center gap-2 mt-1.5">
                             <Badge variant="secondary" className="text-[9px]">{q.topic}</Badge>
                             {p && <span className="text-[9px] text-muted-foreground">{p.timesCorrect}✓ {p.timesWrong}✗</span>}
+                            {mastery && mastery.confidence < 0.7 && mastery.mastery > 50 && (
+                              <span className="text-[8px] text-warning">unbewiesen</span>
+                            )}
                           </div>
                         </div>
 
