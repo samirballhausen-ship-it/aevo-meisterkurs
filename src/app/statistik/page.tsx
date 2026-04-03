@@ -235,6 +235,120 @@ export default function StatistikPage() {
             </Card>
           </motion.div>
         )}
+        {/* ═══ VIBE Prüfungs-Hacks ═══ */}
+        <motion.div variants={item}>
+          <Card className="border-[#c29b62]/20 bg-gradient-to-br from-[#c29b62]/5 to-[#2dd4bf]/5 backdrop-blur-lg overflow-hidden">
+            <div className="h-0.5 bg-gradient-to-r from-[#c29b62]/60 via-[#2dd4bf]/60 to-[#c29b62]/60" />
+            <CardContent className="p-5 space-y-4">
+              <div className="flex items-center gap-2">
+                <span className="text-lg">🔍</span>
+                <p className="text-sm font-bold bg-gradient-to-r from-[#c29b62] to-[#2dd4bf] bg-clip-text text-transparent">
+                  VIBE Prüfungs-Hacks
+                </p>
+                <Badge variant="outline" className="text-[8px] border-[#c29b62]/30 text-[#c29b62] ml-auto">
+                  Muster-Analyse
+                </Badge>
+              </div>
+
+              {/* Killer-Regel */}
+              <div className="rounded-xl bg-destructive/8 border border-destructive/20 p-3 space-y-1.5">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm">🚫</span>
+                  <p className="text-xs font-bold text-destructive">Killer-Regel: Extremwörter streichen</p>
+                  <Badge className="ml-auto text-[9px] bg-destructive/15 text-destructive border-destructive/30" variant="outline">100%</Badge>
+                </div>
+                <p className="text-[11px] text-muted-foreground leading-relaxed">
+                  Antworten mit <strong className="text-foreground">&quot;nur&quot;</strong>, <strong className="text-foreground">&quot;immer&quot;</strong>, <strong className="text-foreground">&quot;nie&quot;</strong>, <strong className="text-foreground">&quot;ausschließlich&quot;</strong> oder <strong className="text-foreground">&quot;stets&quot;</strong> sind <strong className="text-destructive">in 110 von 110 Fällen FALSCH</strong>. Sofort streichen!
+                </p>
+              </div>
+
+              {/* Pattern-Grid */}
+              <div className="grid grid-cols-2 gap-2">
+                {/* Längste Antwort */}
+                <div className="rounded-lg bg-success/8 border border-success/20 p-2.5 space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs">📏</span>
+                    <span className="text-[10px] font-bold text-success">51%</span>
+                  </div>
+                  <p className="text-[10px] font-medium">Längste = Richtig</p>
+                  <p className="text-[9px] text-muted-foreground">Im Schnitt 20 Zeichen länger als falsche</p>
+                </div>
+
+                {/* Antwort A */}
+                <div className="rounded-lg bg-xp/8 border border-xp/20 p-2.5 space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs">🅰️</span>
+                    <span className="text-[10px] font-bold text-xp">47%</span>
+                  </div>
+                  <p className="text-[10px] font-medium">A ist am häufigsten richtig</p>
+                  <p className="text-[9px] text-muted-foreground">Fast jede 2. Frage! (normal wären 22%)</p>
+                </div>
+
+                {/* Kombinations-Antworten */}
+                <div className="rounded-lg bg-primary/8 border border-primary/20 p-2.5 space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs">🔗</span>
+                    <span className="text-[10px] font-bold text-primary">71%</span>
+                  </div>
+                  <p className="text-[10px] font-medium">&quot;und...und&quot; = richtig</p>
+                  <p className="text-[9px] text-muted-foreground">Kombinations-Antworten gewinnen</p>
+                </div>
+
+                {/* Verneinungen */}
+                <div className="rounded-lg bg-orange-500/8 border border-orange-500/20 p-2.5 space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs">⚠️</span>
+                    <span className="text-[10px] font-bold text-orange-500">75%</span>
+                  </div>
+                  <p className="text-[10px] font-medium">&quot;nicht/kein&quot; = falsch</p>
+                  <p className="text-[9px] text-muted-foreground">3 von 4 Verneinungen sind Fallen</p>
+                </div>
+              </div>
+
+              {/* Wort-Signale */}
+              <div className="rounded-lg bg-muted/30 p-3 space-y-2">
+                <p className="text-[10px] font-semibold text-muted-foreground">Wort-Signale</p>
+                <div className="flex flex-wrap gap-1.5">
+                  <Badge variant="outline" className="text-[9px] border-destructive/30 text-destructive">🚫 &quot;Berufsschule&quot; → 90% falsch</Badge>
+                  <Badge variant="outline" className="text-[9px] border-destructive/30 text-destructive">🚫 &quot;nur/immer/nie&quot; → 100% falsch</Badge>
+                  <Badge variant="outline" className="text-[9px] border-success/30 text-success">✓ &quot;Ausbildungsordnung&quot; → 75% richtig</Badge>
+                  <Badge variant="outline" className="text-[9px] border-success/30 text-success">✓ &quot;BBiG&quot; → 67% richtig</Badge>
+                  <Badge variant="outline" className="text-[9px] border-warning/30 text-warning">⚠ &quot;HWK&quot; → nur 37% (Mythos!)</Badge>
+                </div>
+              </div>
+
+              {/* HF-Ausnahme */}
+              <div className="flex items-start gap-2 text-[10px] text-muted-foreground">
+                <span className="shrink-0 mt-0.5">💡</span>
+                <p>
+                  <strong className="text-foreground">Ausnahme HF4</strong> (Prüfung/Abschluss): Hier ist die <strong className="text-foreground">letzte Antwort</strong> am häufigsten richtig (35%), nicht A.
+                </p>
+              </div>
+
+              {/* Notfall-Strategie */}
+              <div className="rounded-xl bg-[#c29b62]/8 border border-[#c29b62]/20 p-3">
+                <p className="text-[10px] font-bold text-[#c29b62] mb-2">🆘 Notfall-Strategie (wenn du GAR nichts weißt)</p>
+                <div className="space-y-1">
+                  {[
+                    { step: "1", text: "Streiche Optionen mit \"nur/immer/nie\"", color: "text-destructive" },
+                    { step: "2", text: "Streiche Verneinungen (\"nicht\", \"kein\")", color: "text-orange-500" },
+                    { step: "3", text: "Nimm die längste verbleibende Antwort", color: "text-primary" },
+                    { step: "4", text: "Wenn gleichlang → nimm A", color: "text-xp" },
+                  ].map((s) => (
+                    <div key={s.step} className="flex items-center gap-2">
+                      <span className={cn("text-[10px] font-black w-4 text-center", s.color)}>{s.step}</span>
+                      <span className="text-[10px] text-muted-foreground">{s.text}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <p className="text-[8px] text-muted-foreground/50 text-center italic">
+                Basierend auf statistischer Analyse aller 211 MC-Fragen. Kein Ersatz fürs Lernen!
+              </p>
+            </CardContent>
+          </Card>
+        </motion.div>
       </motion.main>
     </div>
   );
