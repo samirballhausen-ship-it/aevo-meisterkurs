@@ -245,74 +245,117 @@ export default function StatistikPage() {
             </Card>
           </motion.div>
         )}
-        {/* ═══ VIBE Prüfungs-Hacks — Visual-First ═══ */}
+        {/* ═══ VIBE Prüfungs-Hacks ═══ */}
         <motion.div variants={item}>
-          <Card className="border-[#c29b62]/20 bg-gradient-to-br from-[#c29b62]/5 to-[#2dd4bf]/5 backdrop-blur-sm overflow-hidden">
+          <Card className="border-[#c29b62]/20 bg-gradient-to-br from-[#c29b62]/5 to-[#2dd4bf]/5 overflow-hidden">
             <div className="h-0.5 bg-gradient-to-r from-[#c29b62]/60 via-[#2dd4bf]/60 to-[#c29b62]/60" />
-            <CardContent className="p-4 space-y-3">
+            <CardContent className="p-4 space-y-4">
               <p className="text-xs font-bold bg-gradient-to-r from-[#c29b62] to-[#2dd4bf] bg-clip-text text-transparent text-center">
                 Prüfungs-Hacks
               </p>
 
-              {/* Hero: Killer-Regel — big visual */}
-              <motion.div
-                className="rounded-2xl bg-destructive/10 border border-destructive/25 p-4 text-center"
-                whileHover={{ scale: 1.02 }}
-              >
-                <p className="text-4xl font-black text-destructive">100%</p>
-                <p className="text-xs font-bold mt-1">&quot;nur / immer / nie&quot; = FALSCH</p>
-                <p className="text-[9px] text-muted-foreground mt-0.5">110 von 110 Fällen. Null Ausnahmen.</p>
-              </motion.div>
+              {/* Hero: 52% Bestanden — animated gauge */}
+              <div className="flex items-center justify-center">
+                <div className="relative">
+                  <ProgressRing progress={52} size={100} strokeWidth={8}>
+                    <div className="text-center">
+                      <motion.p
+                        className="text-2xl font-black text-success"
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ type: "spring", delay: 0.3 }}
+                      >
+                        52%
+                      </motion.p>
+                      <p className="text-[7px] text-muted-foreground">nur mit Hacks</p>
+                    </div>
+                  </ProgressRing>
+                </div>
+              </div>
+              <p className="text-[10px] text-center text-muted-foreground">
+                3 Schritte ohne Fachwissen = <strong className="text-success">Bestanden</strong> (50% nötig)
+              </p>
 
-              {/* 4 Pattern Cards — numbers first */}
-              <div className="grid grid-cols-4 gap-2">
+              {/* 3 Steps — visual flow with animated entrance */}
+              <div className="space-y-2">
                 {[
-                  { num: "47%", icon: "🅰️", label: "A richtig", bg: "bg-xp/10 border-xp/25" , numColor: "text-xp" },
-                  { num: "93%", icon: "📏", label: "2x länger", bg: "bg-success/10 border-success/25", numColor: "text-success" },
-                  { num: "71%", icon: "🔗", label: "und+und", bg: "bg-primary/10 border-primary/25", numColor: "text-primary" },
-                  { num: "75%", icon: "🚫", label: "kein=falsch", bg: "bg-orange-500/10 border-orange-500/25", numColor: "text-orange-500" },
-                ].map((p) => (
-                  <div key={p.label} className={cn("rounded-xl border p-2 text-center", p.bg)}>
-                    <p className="text-[10px]">{p.icon}</p>
-                    <p className={cn("text-lg font-black leading-tight", p.numColor)}>{p.num}</p>
-                    <p className="text-[8px] text-muted-foreground leading-tight mt-0.5">{p.label}</p>
-                  </div>
+                  {
+                    step: 1,
+                    icon: "🚫",
+                    title: "Streiche Extremes",
+                    words: ["nur", "immer", "nie", "stets"],
+                    stat: "100% falsch",
+                    statColor: "text-destructive",
+                    bg: "from-destructive/10 to-destructive/5",
+                    border: "border-destructive/20",
+                    delay: 0.1,
+                  },
+                  {
+                    step: 2,
+                    icon: "❌",
+                    title: "Streiche Verneinungen",
+                    words: ["nicht", "kein", "keine"],
+                    stat: "75% falsch",
+                    statColor: "text-orange-500",
+                    bg: "from-orange-500/10 to-orange-500/5",
+                    border: "border-orange-500/20",
+                    delay: 0.2,
+                  },
+                  {
+                    step: 3,
+                    icon: "📏",
+                    title: "Nimm die Längste",
+                    words: ["doppelt so lang = 93%"],
+                    stat: "93% richtig",
+                    statColor: "text-success",
+                    bg: "from-success/10 to-success/5",
+                    border: "border-success/20",
+                    delay: 0.3,
+                  },
+                ].map((s) => (
+                  <motion.div
+                    key={s.step}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: s.delay }}
+                    className={cn("rounded-xl border bg-gradient-to-r p-3 flex items-center gap-3", s.bg, s.border)}
+                  >
+                    <div className="h-10 w-10 rounded-full bg-background/60 flex items-center justify-center shrink-0">
+                      <span className="text-lg">{s.icon}</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-bold">{s.title}</p>
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {s.words.map((w) => (
+                          <span key={w} className="text-[8px] px-1.5 py-0.5 rounded bg-background/50 text-muted-foreground">{w}</span>
+                        ))}
+                      </div>
+                    </div>
+                    <p className={cn("text-sm font-black shrink-0", s.statColor)}>{s.stat.split(" ")[0]}</p>
+                  </motion.div>
                 ))}
               </div>
 
-              {/* Signal Words — compact pills */}
-              <div className="flex flex-wrap gap-1 justify-center">
-                <span className="text-[9px] px-2 py-0.5 rounded-full bg-destructive/15 text-destructive font-medium">Berufsschule 90% falsch</span>
-                <span className="text-[9px] px-2 py-0.5 rounded-full bg-success/15 text-success font-medium">Ausb.ordnung 75% richtig</span>
-                <span className="text-[9px] px-2 py-0.5 rounded-full bg-warning/15 text-warning font-medium">HWK nur 37%</span>
-              </div>
-
-              {/* Notfall — visual flow */}
-              <div className="rounded-xl bg-[#c29b62]/8 border border-[#c29b62]/20 p-3">
-                <p className="text-[9px] font-bold text-[#c29b62] text-center mb-2">Notfall-Strategie</p>
-                <div className="flex items-center justify-center gap-1">
-                  {[
-                    { emoji: "🚫", label: "Extrem-\nwörter", color: "bg-destructive/20 border-destructive/30" },
-                    { emoji: "→", label: "", color: "" },
-                    { emoji: "❌", label: "Ver-\nneinungen", color: "bg-orange-500/20 border-orange-500/30" },
-                    { emoji: "→", label: "", color: "" },
-                    { emoji: "📏", label: "Längste\nnehmen", color: "bg-primary/20 border-primary/30" },
-                    { emoji: "→", label: "", color: "" },
-                    { emoji: "🅰️", label: "Sonst\nA", color: "bg-xp/20 border-xp/30" },
-                  ].map((s, i) => (
-                    s.color ? (
-                      <div key={i} className={cn("h-12 w-12 rounded-lg border flex flex-col items-center justify-center", s.color)}>
-                        <span className="text-sm leading-none">{s.emoji}</span>
-                        <span className="text-[6px] text-muted-foreground text-center leading-tight mt-0.5 whitespace-pre">{s.label}</span>
-                      </div>
-                    ) : (
-                      <span key={i} className="text-muted-foreground/30 text-xs">→</span>
-                    )
-                  ))}
+              {/* Fallen — red pills */}
+              <div className="rounded-xl bg-destructive/5 border border-destructive/15 p-3">
+                <p className="text-[9px] font-bold text-destructive mb-2 text-center">Fallen erkennen</p>
+                <div className="grid grid-cols-3 gap-2 text-center">
+                  <div>
+                    <p className="text-lg font-black text-destructive">0%</p>
+                    <p className="text-[8px] text-muted-foreground">&quot;grundsätzlich&quot;</p>
+                  </div>
+                  <div>
+                    <p className="text-lg font-black text-destructive">10%</p>
+                    <p className="text-[8px] text-muted-foreground">&quot;Berufsschule&quot;</p>
+                  </div>
+                  <div>
+                    <p className="text-lg font-black text-destructive">18%</p>
+                    <p className="text-[8px] text-muted-foreground">Konkrete Zahlen</p>
+                  </div>
                 </div>
               </div>
 
-              <p className="text-[7px] text-muted-foreground/40 text-center">211 MC-Fragen analysiert</p>
+              <p className="text-[7px] text-muted-foreground/40 text-center">Analyse: 211 MC-Fragen. Kein Ersatz fürs Lernen!</p>
             </CardContent>
           </Card>
         </motion.div>
