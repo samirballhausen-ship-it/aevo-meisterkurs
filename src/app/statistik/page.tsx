@@ -323,6 +323,32 @@ const PATTERNS = [
     wordColor: "bg-primary/15 text-primary",
   },
   {
+    id: "brackets",
+    icon: "📎",
+    title: "Klammern (Präzisierungen) = RICHTIG",
+    stat: "88%",
+    statLabel: "richtig",
+    color: "text-success",
+    bg: "bg-success/8",
+    border: "border-success/20",
+    detail: "Antworten die etwas in Klammern präzisieren — z.B. \"der Ausbilder (Meister)\" oder \"HWK (zuständige Stelle)\" — sind zu 88% richtig (7 von 8). Klammern = der Autor wollte die richtige Antwort genauer formulieren.",
+    words: ["(...) = 88%"],
+    wordColor: "bg-success/15 text-success",
+  },
+  {
+    id: "position-d",
+    icon: "🎯",
+    title: "Bei 4 Optionen: D ist fast nie richtig",
+    stat: "6%",
+    statLabel: "nur D",
+    color: "text-destructive",
+    bg: "bg-destructive/5",
+    border: "border-destructive/15",
+    detail: "Bei Fragen mit 4 Optionen (A-D) ist D nur in 6% der Fälle richtig! Zum Vergleich: A = 47%, B = 28%, C = 18%. Wenn du zwischen zwei Optionen schwankst und eine davon ist D — nimm die andere.",
+    words: ["A:47%", "B:28%", "C:18%", "D:6%"],
+    wordColor: "bg-destructive/15 text-destructive",
+  },
+  {
     id: "traps",
     icon: "⚠️",
     title: "Fallen erkennen",
@@ -332,7 +358,7 @@ const PATTERNS = [
     bg: "bg-destructive/5",
     border: "border-destructive/15",
     detail: "\"grundsätzlich\" und \"in der Regel\" klingen differenziert — sind aber 0% richtig! \"Berufsschule\" als Antwort ist zu 90% falsch. Konkrete Zahlen (\"X Monate\") sind zu 82% falsch. Der \"HWK ist immer richtig\"-Mythos stimmt nicht: nur 37%.",
-    words: ["grundsätzlich 0%", "Berufsschule 90% falsch", "HWK nur 37%"],
+    words: ["grundsätzlich 0%", "Berufsschule 90%✗", "HWK nur 37%"],
     wordColor: "bg-destructive/15 text-destructive",
   },
 ];
@@ -368,8 +394,8 @@ function VibeHacks() {
               <p className="text-[10px] text-muted-foreground mt-0.5">5 Schritte wenn du die Antwort nicht weißt</p>
             </div>
             <div className="text-right shrink-0">
-              <ProgressRing progress={52} size={48} strokeWidth={4}>
-                <span className="text-[11px] font-black text-success">52%</span>
+              <ProgressRing progress={54} size={48} strokeWidth={4}>
+                <span className="text-[11px] font-black text-success">54%</span>
               </ProgressRing>
             </div>
             <ChevronDown className={cn("h-4 w-4 text-[#c29b62] shrink-0 transition-transform", showGuide && "rotate-180")} />
@@ -386,7 +412,7 @@ function VibeHacks() {
               >
                 <div className="px-4 pb-4 pt-1 border-t border-[#c29b62]/15 space-y-3">
                   <p className="text-[10px] text-muted-foreground">
-                    Diese 5 Schritte bringen dich von <strong className="text-foreground">20% (Zufall)</strong> auf <strong className="text-success">52% (Bestanden)</strong> — komplett ohne Fachwissen:
+                    Diese 5 Schritte bringen dich von <strong className="text-foreground">20% (Zufall)</strong> auf <strong className="text-success">54% (Bestanden)</strong> — komplett ohne Fachwissen:
                   </p>
 
                   {[
@@ -410,8 +436,8 @@ function VibeHacks() {
 
                   <div className="rounded-xl bg-success/10 border border-success/20 p-3 text-center">
                     <div className="flex items-center justify-center gap-3">
-                      <ProgressRing progress={52} size={50} strokeWidth={5}>
-                        <span className="text-sm font-black text-success">52%</span>
+                      <ProgressRing progress={54} size={50} strokeWidth={5}>
+                        <span className="text-sm font-black text-success">54%</span>
                       </ProgressRing>
                       <div className="text-left">
                         <p className="text-xs font-bold text-success">= Bestanden</p>
