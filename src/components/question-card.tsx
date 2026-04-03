@@ -26,6 +26,7 @@ interface QuestionCardProps {
   questionNumber: number;
   totalQuestions: number;
   examMode?: boolean;
+  questionStreak?: number;  // consecutive correct for THIS question
 }
 
 function shuffleOptions(options: string[], correctIndex: number) {
@@ -44,7 +45,7 @@ function shuffleOptions(options: string[], correctIndex: number) {
 // MC Question Card (existing)
 // ═══════════════════════════════════════════════════════════════════════════
 
-function MCQuestionCard({ question, onAnswer, questionNumber, totalQuestions, examMode }: QuestionCardProps) {
+function MCQuestionCard({ question, onAnswer, questionNumber, totalQuestions, examMode, questionStreak }: QuestionCardProps) {
   const { shuffled: shuffledOptions, newCorrectIndex } = useMemo(
     () => shuffleOptions(question.options ?? [], question.correctAnswer as number),
     [question.id] // eslint-disable-line react-hooks/exhaustive-deps
@@ -86,7 +87,7 @@ function MCQuestionCard({ question, onAnswer, questionNumber, totalQuestions, ex
 
   return (
     <CardContent className="p-5 md:p-6 space-y-5">
-      <QuestionHeader question={question} num={questionNumber} total={totalQuestions} />
+      <QuestionHeader question={question} num={questionNumber} total={totalQuestions} streak={questionStreak} />
 
       {question.context && (
         <div className="rounded-lg bg-muted/50 p-3 text-sm text-muted-foreground border border-border/30">
@@ -220,7 +221,7 @@ function MCQuestionCard({ question, onAnswer, questionNumber, totalQuestions, ex
 // Open Question Card (NEW)
 // ═══════════════════════════════════════════════════════════════════════════
 
-function OpenQuestionCard({ question, onAnswer, questionNumber, totalQuestions, examMode }: QuestionCardProps) {
+function OpenQuestionCard({ question, onAnswer, questionNumber, totalQuestions, examMode, questionStreak }: QuestionCardProps) {
   const [userAnswer, setUserAnswer] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [showHint, setShowHint] = useState(false);
@@ -246,7 +247,7 @@ function OpenQuestionCard({ question, onAnswer, questionNumber, totalQuestions, 
 
   return (
     <CardContent className="p-5 md:p-6 space-y-5">
-      <QuestionHeader question={question} num={questionNumber} total={totalQuestions} />
+      <QuestionHeader question={question} num={questionNumber} total={totalQuestions} streak={questionStreak} />
 
       {question.context && (
         <div className="rounded-lg bg-muted/50 p-3 text-sm text-muted-foreground border border-border/30">
@@ -420,7 +421,7 @@ function OpenQuestionCard({ question, onAnswer, questionNumber, totalQuestions, 
 // Shared Header
 // ═══════════════════════════════════════════════════════════════════════════
 
-function QuestionHeader({ question, num, total }: { question: Question; num: number; total: number }) {
+function QuestionHeader({ question, num, total, streak }: { question: Question; num: number; total: number; streak?: number }) {
   return (
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-2">
@@ -433,7 +434,18 @@ function QuestionHeader({ question, num, total }: { question: Question; num: num
           </Badge>
         )}
       </div>
-      <span className="text-xs text-muted-foreground">{num}/{total}</span>
+      <div className="flex items-center gap-2">
+        {streak != null && streak > 0 && (
+          <div className={cn(
+            "flex items-center gap-0.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full",
+            streak >= 3 ? "bg-success/15 text-success" : streak >= 2 ? "bg-warning/15 text-warning" : "bg-muted/50 text-muted-foreground",
+          )}>
+            {streak >= 3 ? "✓✓✓" : streak >= 2 ? "✓✓" : "✓"}
+            <span className="text-[8px] ml-0.5">{streak >= 3 ? "sicher" : `${streak}/3`}</span>
+          </div>
+        )}
+        <span className="text-xs text-muted-foreground">{num}/{total}</span>
+      </div>
     </div>
   );
 }

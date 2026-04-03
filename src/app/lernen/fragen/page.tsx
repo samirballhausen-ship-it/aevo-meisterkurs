@@ -172,6 +172,7 @@ function FragenContent() {
               onAnswer={handlePracticeAnswer}
               questionNumber={practiceIdx + 1}
               totalQuestions={processed.length}
+              questionStreak={progress.get(practiceQuestion.id)?.streak ?? 0}
             />
           </AnimatePresence>
 

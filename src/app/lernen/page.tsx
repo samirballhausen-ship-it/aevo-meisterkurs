@@ -38,7 +38,7 @@ function LernenContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { user, stats, updateStats, loading: authLoading } = useAuth();
-  const { getDueQuestions, getNewQuestions, getWeakQuestions, getSmartQuestions, getHFProgress, recordAnswer } = useProgress();
+  const { getDueQuestions, getNewQuestions, getWeakQuestions, getSmartQuestions, getHFProgress, recordAnswer, progress } = useProgress();
 
   const [mode, setMode] = useState<SessionMode | null>(null);
   const [selectedHF, setSelectedHF] = useState<Handlungsfeld | undefined>(undefined);
@@ -575,6 +575,7 @@ function LernenContent() {
               questionNumber={currentIndex + 1}
               totalQuestions={sessionQuestions.length}
               examMode={isExam}
+              questionStreak={progress.get(currentQuestion.id)?.streak ?? 0}
             />
           )}
         </AnimatePresence>
