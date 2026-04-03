@@ -90,28 +90,35 @@ function calculateNextReview(mastery: number, streak: number, totalAttempts: num
   return Date.now() + days * 86400000;
 }
 
-/** Migrate old progress format to include mastery fields */
+/** Migrate progress data to include all mastery fields */
 function migrateProgress(p: QuestionProgress): QuestionProgress {
-  if (p.mastery !== undefined && p.history !== undefined) return p;
-
   const total = (p.timesCorrect ?? 0) + (p.timesWrong ?? 0);
+
+  // Already fully migrated
+  if (p.mastery !== undefined && p.history !== undefined && p.streak !== undefined && p.confidence !== undefined) return p;
+
   const rate = total > 0 ? (p.timesCorrect ?? 0) / total : 0;
   const days = (Date.now() - (p.lastSeen ?? Date.now())) / 86400000;
   const decay = Math.pow(0.5, Math.max(days, 0) / 14);
 
-  // Estimate mastery from old data
-  let rawMastery = rate * 100;
-  // Response time bonus
-  if (p.avgResponseTime && p.avgResponseTime < 10) rawMastery *= 1.05;
-  rawMastery *= decay;
+  let rawMastery = p.mastery ?? Math.round(Math.min(Math.max(rate * 100 * decay, 0), 100));
+  const confidence = p.confidence ?? calculateConfidence(total);
 
-  const confidence = calculateConfidence(total);
-  const streak = p.box >= 2 ? Math.min(p.box, 5) : 0;
+  // Estimate streak from history or box
+  let streak = p.streak ?? 0;
+  if (p.history && p.history.length > 0 && streak === 0) {
+    for (const h of p.history) {
+      if (h.c) streak++;
+      else break;
+    }
+  } else if (streak === 0 && p.box >= 2) {
+    streak = Math.min(p.box, 3);
+  }
 
   return {
     ...p,
-    mastery: Math.round(Math.min(Math.max(rawMastery, 0), 100)),
-    history: [],
+    mastery: rawMastery,
+    history: p.history ?? [],
     streak,
     confidence,
   };
@@ -141,6 +148,7 @@ interface ProgressContextValue {
   getNewQuestions: (hf?: Handlungsfeld, count?: number) => string[];
   getWeakQuestions: (count?: number) => string[];
   getSmartQuestions: (hf?: Handlungsfeld, count?: number, typeFilter?: "mc" | "open") => string[];
+  getStreakBuildQuestions: (hf?: Handlungsfeld, count?: number) => string[];
   getHFProgress: (hf: Handlungsfeld) => { total: number; mastered: number; inProgress: number; notStarted: number; correctRate: number };
   getOverallProgress: () => { total: number; mastered: number; correctRate: number };
   getMasteryStats: () => MasteryStats;
@@ -328,6 +336,32 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
     return selected.slice(0, count).map((s) => s.id);
   }, [progress]);
 
+  // ─── Streak Build: Questions answered but not yet 3x correct in a row ──────
+
+  const getStreakBuildQuestions = useCallback((hf?: Handlungsfeld, count = 20) => {
+    return Array.from(progress.entries())
+      .filter(([id, p]) => {
+        const q = questions.find((qq) => qq.id === id);
+        if (!q) return false;
+        if (hf && q.handlungsfeld !== hf) return false;
+        const streak = p.streak ?? 0;
+        const attempts = p.timesCorrect + p.timesWrong;
+        // Must have been answered at least once, but streak < 3
+        return attempts >= 1 && streak < 3;
+      })
+      .sort(([, a], [, b]) => {
+        // Prioritize: higher mastery but low streak first (almost there!)
+        // Then lower mastery (needs more work)
+        const aScore = (a.streak ?? 0) * 30 + (a.mastery ?? 0);
+        const bScore = (b.streak ?? 0) * 30 + (b.mastery ?? 0);
+        // Higher streak first (close to proving), then by mastery desc
+        if ((a.streak ?? 0) !== (b.streak ?? 0)) return (b.streak ?? 0) - (a.streak ?? 0);
+        return (b.mastery ?? 0) - (a.mastery ?? 0);
+      })
+      .slice(0, count)
+      .map(([id]) => id);
+  }, [progress]);
+
   // ─── Legacy Selection Functions (still used by some modes) ─────────────────
 
   const getDueQuestions = useCallback((hf?: Handlungsfeld) => {
@@ -481,7 +515,7 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
     <ProgressContext.Provider
       value={{
         progress, loading, recordAnswer,
-        getDueQuestions, getNewQuestions, getWeakQuestions, getSmartQuestions,
+        getDueQuestions, getNewQuestions, getWeakQuestions, getSmartQuestions, getStreakBuildQuestions,
         getHFProgress, getOverallProgress, getMasteryStats, getQuestionMastery,
       }}
     >

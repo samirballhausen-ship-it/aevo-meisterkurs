@@ -38,7 +38,7 @@ function LernenContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { user, stats, updateStats, loading: authLoading } = useAuth();
-  const { getDueQuestions, getNewQuestions, getWeakQuestions, getSmartQuestions, getHFProgress, recordAnswer, progress } = useProgress();
+  const { getDueQuestions, getNewQuestions, getWeakQuestions, getSmartQuestions, getStreakBuildQuestions, getHFProgress, recordAnswer, progress } = useProgress();
 
   const [mode, setMode] = useState<SessionMode | null>(null);
   const [selectedHF, setSelectedHF] = useState<Handlungsfeld | undefined>(undefined);
@@ -111,6 +111,15 @@ function LernenContent() {
         }
         break;
       }
+      case "streakBuild": {
+        // Streak aufbauen: Fragen die beantwortet aber noch nicht 3x richtig in Folge
+        questionIds = getStreakBuildQuestions(hf, 20);
+        if (questionIds.length < 5) {
+          const extra = getSmartQuestions(hf, 20 - questionIds.length);
+          questionIds = [...questionIds, ...extra.filter((id) => !questionIds.includes(id))].slice(0, 20);
+        }
+        break;
+      }
       case "exam": {
         // Prüfungs-Simulation: 30 questions, truly random (simulates real exam)
         const all = getNewQuestions(undefined, 200);
@@ -135,7 +144,7 @@ function LernenContent() {
     setSessionComplete(false);
     setStreak(0);
     setMode(sessionMode);
-  }, [getDueQuestions, getNewQuestions, getWeakQuestions, getSmartQuestions]);
+  }, [getDueQuestions, getNewQuestions, getWeakQuestions, getSmartQuestions, getStreakBuildQuestions]);
 
   const handleAnswer = useCallback(async (correct: boolean, responseTime: number, partial?: boolean) => {
     const questionId = sessionQuestions[currentIndex];
@@ -295,6 +304,13 @@ function LernenContent() {
                 icon: Brain,
                 title: "Schwächen gezielt üben",
                 desc: "Fragen mit niedrigem Mastery-Score — da wo du am meisten lernst",
+                accent: "text-orange-500",
+              },
+              {
+                mode: "streakBuild" as SessionMode,
+                icon: Flame,
+                title: "Streaks aufbauen",
+                desc: "Fragen die du schon kennst aber noch nicht 3× in Folge richtig hattest — festige dein Wissen!",
                 accent: "text-orange-500",
               },
               {
