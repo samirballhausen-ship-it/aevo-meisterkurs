@@ -13,6 +13,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { HANDLUNGSFELDER, type Handlungsfeld } from "@/lib/types";
+import { questions } from "@/lib/questions";
 import Link from "next/link";
 import { BarChart3, Zap, Flame, BookOpen, CheckCircle2 } from "lucide-react";
 
@@ -67,11 +68,25 @@ export default function StatistikPage() {
 
   const hfData = (["HF1", "HF2", "HF3", "HF4"] as Handlungsfeld[]).map((hf) => {
     const p = getHFProgress(hf);
-    const pct = p.total > 0 ? Math.round(((p.mastered + p.inProgress) / p.total) * 100) : 0;
-    return { hf, ...HANDLUNGSFELDER[hf], pct, mastered: p.mastered, total: p.total };
+    const hfQuestions = questions.filter((q) => q.handlungsfeld === hf);
+    // Durchschnittlicher Mastery-Score für dieses HF
+    let masterySum = 0;
+    let started = 0;
+    for (const q of hfQuestions) {
+      const qp = progress.get(q.id);
+      if (qp) {
+        masterySum += qp.mastery ?? 0;
+        started++;
+      }
+    }
+    const avgMastery = started > 0 ? Math.round(masterySum / started) : 0;
+    // Score = Mastery × √Coverage (gleiche Formel wie Gesamt-Score)
+    const coverage = hfQuestions.length > 0 ? started / hfQuestions.length : 0;
+    const hfScore = Math.round(avgMastery * Math.sqrt(Math.min(coverage, 1)));
+    return { hf, ...HANDLUNGSFELDER[hf], score: hfScore, avgMastery, started, mastered: p.mastered, total: p.total };
   });
 
-  const weakestHF = hfData.reduce((a, b) => (a.pct < b.pct ? a : b));
+  const weakestHF = hfData.reduce((a, b) => (a.score < b.score ? a : b));
 
   return (
     <div className="min-h-screen pb-20 md:pb-6">
@@ -124,38 +139,41 @@ export default function StatistikPage() {
                 Themenbereiche
               </p>
 
-              {hfData.map(({ hf, title, pct, mastered, total }) => (
-                <div key={hf} className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="text-[9px] h-5 px-1.5">{hf}</Badge>
-                      <span className="text-xs font-medium">{title}</span>
+              {hfData.map(({ hf, title, score, started, mastered, total }) => (
+                <Link key={hf} href={`/lernen/fragen?hf=${hf}`}>
+                  <div className="space-y-1.5 group cursor-pointer">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="text-[9px] h-5 px-1.5">{hf}</Badge>
+                        <span className="text-xs font-medium group-hover:text-primary transition-colors">{title}</span>
+                      </div>
+                      <span className={cn("text-lg font-black tabular-nums", getMasteryColor(score))}>
+                        {score}
+                      </span>
                     </div>
-                    <span className={cn("text-sm font-bold tabular-nums", getMasteryColor(pct))}>
-                      {pct}%
-                    </span>
+                    <div className="h-2.5 bg-muted/30 rounded-full overflow-hidden">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${score}%` }}
+                        transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
+                        className={cn("h-full rounded-full", getMasteryBarColor(score))}
+                      />
+                    </div>
+                    <div className="flex items-center gap-2 text-[9px] text-muted-foreground">
+                      <CheckCircle2 className="h-2.5 w-2.5 text-success" />
+                      {mastered} gemeistert
+                      <span className="mx-1">·</span>
+                      {started}/{total} bearbeitet
+                    </div>
                   </div>
-                  <div className="h-2.5 bg-muted/30 rounded-full overflow-hidden">
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{ width: `${pct}%` }}
-                      transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
-                      className={cn("h-full rounded-full", getMasteryBarColor(pct))}
-                    />
-                  </div>
-                  <div className="flex items-center gap-2 text-[9px] text-muted-foreground">
-                    <CheckCircle2 className="h-2.5 w-2.5 text-success" />
-                    {mastered} gemeistert
-                    <span className="ml-auto">{total} Fragen</span>
-                  </div>
-                </div>
+                </Link>
               ))}
             </CardContent>
           </Card>
         </motion.div>
 
         {/* ═══ Schwäche + Aktion — ONE CTA ═══ */}
-        {progress.size > 0 && weakestHF.pct < 60 && (
+        {progress.size > 0 && weakestHF.score < 60 && (
           <motion.div variants={item}>
             <Card className="border-primary/20 bg-primary/5 backdrop-blur-sm">
               <CardContent className="p-4">
@@ -166,7 +184,7 @@ export default function StatistikPage() {
                   <div className="flex-1">
                     <p className="text-sm font-medium">Empfehlung</p>
                     <p className="text-xs text-muted-foreground">
-                      <strong>{weakestHF.title}</strong> ist dein schwächstes Thema ({weakestHF.pct}%)
+                      <strong>{weakestHF.title}</strong> ist dein schwächstes Thema (Score: {weakestHF.score})
                     </p>
                   </div>
                 </div>
