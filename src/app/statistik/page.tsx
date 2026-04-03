@@ -130,6 +130,9 @@ export default function StatistikPage() {
           </Card>
         </motion.div>
 
+        {/* ═══ VIBE Prüfungs-Hacks ═══ */}
+        <VibeHacks />
+
         {/* ═══ 4 HF Fortschrittsbalken — SIMPLE ═══ */}
         <motion.div variants={item}>
           <Card className="border-border/30 bg-card/50 backdrop-blur-sm">
@@ -245,8 +248,6 @@ export default function StatistikPage() {
             </Card>
           </motion.div>
         )}
-        {/* ═══ VIBE Prüfungs-Hacks ═══ */}
-        <VibeHacks />
       </motion.main>
     </div>
   );
