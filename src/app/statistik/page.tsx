@@ -130,9 +130,6 @@ export default function StatistikPage() {
           </Card>
         </motion.div>
 
-        {/* ═══ VIBE Prüfungs-Hacks ═══ */}
-        <VibeHacks />
-
         {/* ═══ 4 HF Fortschrittsbalken — SIMPLE ═══ */}
         <motion.div variants={item}>
           <Card className="border-border/30 bg-card/50 backdrop-blur-sm">
@@ -248,6 +245,8 @@ export default function StatistikPage() {
             </Card>
           </motion.div>
         )}
+        {/* ═══ VIBE Prüfungs-Hacks ═══ */}
+        <VibeHacks />
       </motion.main>
     </div>
   );
@@ -348,23 +347,91 @@ function VibeHacks() {
       animate={{ opacity: 1, y: 0 }}
       className="space-y-3"
     >
-      {/* Header */}
-      <Card className="border-[#c29b62]/20 bg-gradient-to-br from-[#c29b62]/5 to-[#2dd4bf]/5 overflow-hidden">
+      {/* ═══ BLACKOUT GUIDE — Hero, eigenständig oben ═══ */}
+      <Card
+        className={cn(
+          "border-[#c29b62]/25 overflow-hidden cursor-pointer transition-all",
+          showGuide ? "bg-gradient-to-br from-[#c29b62]/8 to-[#2dd4bf]/8" : "bg-gradient-to-br from-[#c29b62]/5 to-[#2dd4bf]/5",
+        )}
+        onClick={() => setShowGuide(!showGuide)}
+      >
         <div className="h-0.5 bg-gradient-to-r from-[#c29b62]/60 via-[#2dd4bf]/60 to-[#c29b62]/60" />
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between">
-            <p className="text-sm font-bold bg-gradient-to-r from-[#c29b62] to-[#2dd4bf] bg-clip-text text-transparent">
-              Prüfungs-Hacks
-            </p>
-            <Badge variant="outline" className="text-[8px] border-[#c29b62]/30 text-[#c29b62]">
-              211 Fragen analysiert
-            </Badge>
+        <CardContent className="p-0">
+          <div className="flex items-center gap-3 p-4">
+            <div className="h-12 w-12 rounded-2xl bg-[#c29b62]/15 flex items-center justify-center shrink-0">
+              <span className="text-2xl">🆘</span>
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-bold bg-gradient-to-r from-[#c29b62] to-[#2dd4bf] bg-clip-text text-transparent">
+                Blackout? So gehst du vor.
+              </p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">5 Schritte wenn du die Antwort nicht weißt</p>
+            </div>
+            <div className="text-right shrink-0">
+              <ProgressRing progress={52} size={48} strokeWidth={4}>
+                <span className="text-[11px] font-black text-success">52%</span>
+              </ProgressRing>
+            </div>
+            <ChevronDown className={cn("h-4 w-4 text-[#c29b62] shrink-0 transition-transform", showGuide && "rotate-180")} />
           </div>
-          <p className="text-[10px] text-muted-foreground mt-1">
-            Muster in den Antworten. Tippe auf ein Muster für Details.
-          </p>
+
+          <AnimatePresence>
+            {showGuide && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.25 }}
+                className="overflow-hidden"
+              >
+                <div className="px-4 pb-4 pt-1 border-t border-[#c29b62]/15 space-y-3">
+                  <p className="text-[10px] text-muted-foreground">
+                    Diese 5 Schritte bringen dich von <strong className="text-foreground">20% (Zufall)</strong> auf <strong className="text-success">52% (Bestanden)</strong> — komplett ohne Fachwissen:
+                  </p>
+
+                  {[
+                    { step: "1", action: "Lies alle Antworten durch", detail: "Suche nach den Signalwörtern", color: "bg-muted/50 text-foreground", arrow: true },
+                    { step: "🚫", action: "Streiche \"nur/immer/nie/stets\"", detail: "100% Trefferquote — null Ausnahmen", color: "bg-destructive/15 text-destructive", arrow: true },
+                    { step: "❌", action: "Streiche \"nicht/kein/keine\"", detail: "75% sind Fallen", color: "bg-orange-500/15 text-orange-500", arrow: true },
+                    { step: "📏", action: "Vergleiche die Länge der Restlichen", detail: "Ist eine deutlich länger? → Die ist's (93%)", color: "bg-success/15 text-success", arrow: true },
+                    { step: "🅰️", action: "Alle gleich lang? → Nimm A", detail: "47% Trefferquote. Bei HF4: nimm die Letzte.", color: "bg-xp/15 text-xp", arrow: false },
+                  ].map((s, idx) => (
+                    <div key={idx}>
+                      <div className="flex items-center gap-2.5">
+                        <div className={cn("h-8 w-8 rounded-lg flex items-center justify-center shrink-0 text-sm font-black", s.color)}>{s.step}</div>
+                        <div className="flex-1">
+                          <p className="text-[11px] font-bold">{s.action}</p>
+                          <p className="text-[9px] text-muted-foreground">{s.detail}</p>
+                        </div>
+                      </div>
+                      {s.arrow && <div className="flex justify-center py-0.5"><div className="w-0.5 h-3 bg-muted/40 rounded-full" /></div>}
+                    </div>
+                  ))}
+
+                  <div className="rounded-xl bg-success/10 border border-success/20 p-3 text-center">
+                    <div className="flex items-center justify-center gap-3">
+                      <ProgressRing progress={52} size={50} strokeWidth={5}>
+                        <span className="text-sm font-black text-success">52%</span>
+                      </ProgressRing>
+                      <div className="text-left">
+                        <p className="text-xs font-bold text-success">= Bestanden</p>
+                        <p className="text-[9px] text-muted-foreground">50% nötig, 20% wäre Zufall</p>
+                        <p className="text-[9px] text-muted-foreground">+160% besser als blindes Raten</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </CardContent>
       </Card>
+
+      {/* ═══ Muster-Cards Header ═══ */}
+      <div className="flex items-center justify-between px-1 pt-2">
+        <p className="text-xs font-semibold text-muted-foreground">Alle Muster im Detail</p>
+        <Badge variant="outline" className="text-[8px] border-muted/40">211 Fragen</Badge>
+      </div>
 
       {/* Expandable Pattern Cards */}
       {PATTERNS.map((p, i) => (
@@ -422,120 +489,6 @@ function VibeHacks() {
         </motion.div>
       ))}
 
-      {/* ═══ BLACKOUT GUIDE ═══ */}
-      <Card
-        className={cn(
-          "border-[#c29b62]/25 overflow-hidden cursor-pointer transition-all",
-          showGuide ? "bg-gradient-to-br from-[#c29b62]/8 to-[#2dd4bf]/8" : "",
-        )}
-        onClick={() => setShowGuide(!showGuide)}
-      >
-        <CardContent className="p-0">
-          <div className="flex items-center gap-3 p-3">
-            <div className="h-10 w-10 rounded-xl bg-[#c29b62]/15 flex items-center justify-center shrink-0">
-              <span className="text-lg">🆘</span>
-            </div>
-            <div className="flex-1">
-              <p className="text-xs font-bold bg-gradient-to-r from-[#c29b62] to-[#2dd4bf] bg-clip-text text-transparent">
-                Blackout? So gehst du vor.
-              </p>
-              <p className="text-[9px] text-muted-foreground mt-0.5">Schritt-für-Schritt wenn du die Antwort nicht weißt</p>
-            </div>
-            <div className="text-right shrink-0">
-              <p className="text-xl font-black text-success leading-none">52%</p>
-              <p className="text-[7px] text-muted-foreground">= bestanden</p>
-            </div>
-            <ChevronDown className={cn("h-4 w-4 text-muted-foreground shrink-0 transition-transform", showGuide && "rotate-180")} />
-          </div>
-
-          <AnimatePresence>
-            {showGuide && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.25 }}
-                className="overflow-hidden"
-              >
-                <div className="px-3 pb-4 pt-1 border-t border-[#c29b62]/15 space-y-3">
-                  <p className="text-[10px] text-muted-foreground">
-                    Diese 5 Schritte bringen dich von <strong className="text-foreground">20% (Zufall)</strong> auf <strong className="text-success">52% (Bestanden)</strong> — komplett ohne Fachwissen:
-                  </p>
-
-                  {[
-                    {
-                      step: "1",
-                      action: "Lies alle Antworten durch",
-                      detail: "Suche nach den Signalwörtern",
-                      color: "bg-muted/50 text-foreground",
-                      arrow: true,
-                    },
-                    {
-                      step: "🚫",
-                      action: "Streiche \"nur/immer/nie/stets\"",
-                      detail: "100% Trefferquote — null Ausnahmen",
-                      color: "bg-destructive/15 text-destructive",
-                      arrow: true,
-                    },
-                    {
-                      step: "❌",
-                      action: "Streiche \"nicht/kein/keine\"",
-                      detail: "75% sind Fallen",
-                      color: "bg-orange-500/15 text-orange-500",
-                      arrow: true,
-                    },
-                    {
-                      step: "📏",
-                      action: "Vergleiche die Länge der Restlichen",
-                      detail: "Ist eine deutlich länger? → Die ist's (93%)",
-                      color: "bg-success/15 text-success",
-                      arrow: true,
-                    },
-                    {
-                      step: "🅰️",
-                      action: "Alle gleich lang? → Nimm A",
-                      detail: "47% Trefferquote. Bei HF4: nimm die Letzte.",
-                      color: "bg-xp/15 text-xp",
-                      arrow: false,
-                    },
-                  ].map((s, idx) => (
-                    <div key={idx}>
-                      <div className="flex items-center gap-2.5">
-                        <div className={cn("h-8 w-8 rounded-lg flex items-center justify-center shrink-0 text-sm font-black", s.color)}>
-                          {s.step}
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-[11px] font-bold">{s.action}</p>
-                          <p className="text-[9px] text-muted-foreground">{s.detail}</p>
-                        </div>
-                      </div>
-                      {s.arrow && (
-                        <div className="flex justify-center py-0.5">
-                          <div className="w-0.5 h-3 bg-muted/40 rounded-full" />
-                        </div>
-                      )}
-                    </div>
-                  ))}
-
-                  {/* Result */}
-                  <div className="rounded-xl bg-success/10 border border-success/20 p-3 text-center">
-                    <div className="flex items-center justify-center gap-3">
-                      <ProgressRing progress={52} size={50} strokeWidth={5}>
-                        <span className="text-sm font-black text-success">52%</span>
-                      </ProgressRing>
-                      <div className="text-left">
-                        <p className="text-xs font-bold text-success">= Bestanden</p>
-                        <p className="text-[9px] text-muted-foreground">50% nötig, 20% wäre Zufall</p>
-                        <p className="text-[9px] text-muted-foreground">+160% besser als blindes Raten</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </CardContent>
-      </Card>
     </motion.div>
   );
 }
