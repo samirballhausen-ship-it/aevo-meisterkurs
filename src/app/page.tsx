@@ -188,7 +188,7 @@ export default function DashboardPage() {
                         {avgMastery >= 80 ? "Prüfungsreif!" : avgMastery >= 60 ? "Fast geschafft!" : avgMastery >= 40 ? "Auf gutem Weg" : avgMastery >= 20 ? "Weitermachen!" : "Los geht's!"}
                       </p>
                       <p className="text-[10px] text-muted-foreground mt-0.5">
-                        {progress.size} von {masteryStats.totalQuestions} bearbeitet · {masteryStats.mastered + masteryStats.secure} sicher
+                        {progress.size} von {masteryStats.totalQuestions} bearbeitet · {masteryStats.provenLearned} sicher gelernt{masteryStats.unproven > 0 ? ` · ${masteryStats.unproven} unbewiesen` : ""}
                       </p>
                     </div>
                     {/* Mini HF bars */}

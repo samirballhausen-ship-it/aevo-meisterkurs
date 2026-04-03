@@ -67,14 +67,26 @@ function masteryToBox(mastery: number): LeitnerBox {
   return 0;
 }
 
-/** Dynamic review interval based on mastery */
-function calculateNextReview(mastery: number): number {
-  const days =
-    mastery >= 90 ? 30 :
-    mastery >= 75 ? 14 :
-    mastery >= 55 ? 7 :
-    mastery >= 35 ? 3 :
-    mastery >= 15 ? 1 : 0;
+/** Dynamic review interval based on mastery + streak + attempts
+ *  Key rule: 3x in Folge richtig = "sicher gelernt" → longer intervals
+ *  Few attempts = always come back soon regardless of mastery */
+function calculateNextReview(mastery: number, streak: number, totalAttempts: number): number {
+  let days: number;
+
+  // 3+ in Folge richtig = bewiesen → gestaffelte Intervalle
+  if (streak >= 5 && mastery >= 80) days = 30;
+  else if (streak >= 3 && mastery >= 70) days = 14;
+  else if (streak >= 3 && mastery >= 50) days = 7;
+  // Wenige Versuche = immer bald wiederkommen (egal wie hoch der Score)
+  else if (totalAttempts <= 1) days = 0;           // sofort wieder
+  else if (totalAttempts <= 2) days = 1;           // 1 Tag
+  else if (totalAttempts <= 3) days = 2;           // 2 Tage
+  // Normal mastery-basiert (aber mit Streak < 3)
+  else if (mastery >= 80) days = 7;
+  else if (mastery >= 60) days = 3;
+  else if (mastery >= 40) days = 1;
+  else days = 0;
+
   return Date.now() + days * 86400000;
 }
 
@@ -115,6 +127,8 @@ interface MasteryStats {
   beginner: number;
   unknown: number;
   notStarted: number;
+  provenLearned: number;   // streak >= 3 AND mastery >= 70 = "sicher gelernt"
+  unproven: number;        // mastery > 50 AND totalAttempts <= 2 = "noch unbewiesen"
   avgMastery: number;
   weakestTopics: { topic: string; hf: Handlungsfeld; avgMastery: number }[];
 }
@@ -216,16 +230,16 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
     const totalAttempts = (existing?.timesCorrect ?? 0) + (existing?.timesWrong ?? 0) + 1;
     const confidence = calculateConfidence(totalAttempts);
 
-    // Derive Leitner box and review interval from mastery
-    const box = masteryToBox(mastery);
-    const nextReview = calculateNextReview(mastery);
-
-    // Streak
+    // Streak (consecutive correct from most recent)
     let streak = 0;
     for (const h of newHistory) {
       if (h.c) streak++;
       else break;
     }
+
+    // Derive Leitner box and review interval
+    const box = masteryToBox(mastery);
+    const nextReview = calculateNextReview(mastery, streak, totalAttempts);
 
     const updated: QuestionProgress = {
       questionId,
@@ -277,9 +291,18 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
         // Recently answered wrong: +12
         if (p.history && p.history.length > 0 && !p.history[0].c) priority += 12;
 
-        // Low attempts (unproven score): +8
-        if (totalAttempts <= 2) priority += 8;
-        else if (totalAttempts <= 4) priority += 4;
+        const streak = p.streak ?? 0;
+
+        // Unbewiesen: hoher Score aber wenige Versuche → MUSS wiederholt werden
+        if (totalAttempts <= 1 && m > 40) priority += 25;  // 1x richtig = sofort nochmal
+        else if (totalAttempts <= 2 && streak < 3) priority += 15;
+        else if (totalAttempts <= 3 && streak < 3) priority += 8;
+
+        // Noch nicht 3x in Folge richtig = nicht gesichert
+        if (streak < 3 && totalAttempts >= 2 && m > 50) priority += 5;
+
+        // 3+ in Folge richtig = gesichert → niedrigere Priorität
+        if (streak >= 3 && m >= 70) priority -= 10;
 
         return { id: q.id, priority: Math.round(priority), isNew: false };
       });
@@ -389,6 +412,7 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
     const stats: MasteryStats = {
       totalQuestions: questions.length,
       mastered: 0, secure: 0, learning: 0, beginner: 0, unknown: 0, notStarted: 0,
+      provenLearned: 0, unproven: 0,
       avgMastery: 0,
       weakestTopics: [],
     };
@@ -401,6 +425,8 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
       if (!p) { stats.notStarted++; continue; }
 
       const m = p.mastery ?? 0;
+      const streak = p.streak ?? 0;
+      const totalAttempts = p.timesCorrect + p.timesWrong;
       masterySum += m;
 
       if (m >= 80) stats.mastered++;
@@ -408,6 +434,10 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
       else if (m >= 40) stats.learning++;
       else if (m >= 20) stats.beginner++;
       else stats.unknown++;
+
+      // Proven vs unproven tracking
+      if (streak >= 3 && m >= 70) stats.provenLearned++;
+      if (m > 50 && totalAttempts <= 2) stats.unproven++;
 
       const key = `${q.handlungsfeld}|${q.topic}`;
       if (!topicData[key]) topicData[key] = { sum: 0, count: 0, hf: q.handlungsfeld };

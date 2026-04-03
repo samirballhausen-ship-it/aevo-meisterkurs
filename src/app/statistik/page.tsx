@@ -69,21 +69,22 @@ export default function StatistikPage() {
   const hfData = (["HF1", "HF2", "HF3", "HF4"] as Handlungsfeld[]).map((hf) => {
     const p = getHFProgress(hf);
     const hfQuestions = questions.filter((q) => q.handlungsfeld === hf);
-    // Durchschnittlicher Mastery-Score für dieses HF
-    let masterySum = 0;
-    let started = 0;
+    let masterySum = 0, started = 0, proven = 0, unproven = 0;
     for (const q of hfQuestions) {
       const qp = progress.get(q.id);
       if (qp) {
         masterySum += qp.mastery ?? 0;
         started++;
+        const streak = qp.streak ?? 0;
+        const attempts = qp.timesCorrect + qp.timesWrong;
+        if (streak >= 3 && (qp.mastery ?? 0) >= 70) proven++;
+        if ((qp.mastery ?? 0) > 50 && attempts <= 2) unproven++;
       }
     }
     const avgMastery = started > 0 ? Math.round(masterySum / started) : 0;
-    // Score = Mastery × √Coverage (gleiche Formel wie Gesamt-Score)
     const coverage = hfQuestions.length > 0 ? started / hfQuestions.length : 0;
     const hfScore = Math.round(avgMastery * Math.sqrt(Math.min(coverage, 1)));
-    return { hf, ...HANDLUNGSFELDER[hf], score: hfScore, avgMastery, started, mastered: p.mastered, total: p.total };
+    return { hf, ...HANDLUNGSFELDER[hf], score: hfScore, started, proven, unproven, total: p.total };
   });
 
   const weakestHF = hfData.reduce((a, b) => (a.score < b.score ? a : b));
@@ -139,7 +140,7 @@ export default function StatistikPage() {
                 Themenbereiche
               </p>
 
-              {hfData.map(({ hf, title, score, started, mastered, total }) => (
+              {hfData.map(({ hf, title, score, started, proven, unproven, total }) => (
                 <Link key={hf} href={`/lernen/fragen?hf=${hf}`}>
                   <div className="space-y-1.5 group cursor-pointer">
                     <div className="flex items-center justify-between">
@@ -161,9 +162,9 @@ export default function StatistikPage() {
                     </div>
                     <div className="flex items-center gap-2 text-[9px] text-muted-foreground">
                       <CheckCircle2 className="h-2.5 w-2.5 text-success" />
-                      {mastered} gemeistert
-                      <span className="mx-1">·</span>
-                      {started}/{total} bearbeitet
+                      {proven} sicher gelernt
+                      {unproven > 0 && <><span className="mx-0.5">·</span><span className="text-warning">{unproven} unbewiesen</span></>}
+                      <span className="ml-auto">{started}/{total}</span>
                     </div>
                   </div>
                 </Link>
