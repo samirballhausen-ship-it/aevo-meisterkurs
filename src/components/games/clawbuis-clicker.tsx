@@ -341,7 +341,7 @@ export function ClawbuisClicker() {
           transition={{ type: "spring" }}
           className="relative w-32 h-32 mx-auto flex items-center justify-center"
         >
-          <div className="absolute inset-0 blur-3xl opacity-30 bg-gradient-to-br from-[#2dd4bf] to-[#c29b62] rounded-full" />
+          <div className="absolute inset-0 blur-xl opacity-30 bg-gradient-to-br from-[#2dd4bf] to-[#c29b62] rounded-full" />
           <ClawbuisLogo className="h-20 w-20 drop-shadow-[0_0_20px_rgba(45,212,191,0.4)]" />
         </motion.div>
         <div>
@@ -443,7 +443,7 @@ export function ClawbuisClicker() {
             >
               {/* Ambient glow */}
               <motion.div
-                className="absolute inset-0 rounded-full blur-3xl"
+                className="absolute inset-0 rounded-full blur-xl"
                 animate={{
                   opacity: pulse ? 0.5 : 0.2,
                   scale: pulse ? 1.2 : 1,

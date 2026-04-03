@@ -86,7 +86,7 @@ export default function DashboardPage() {
 
         {/* Hero */}
         <motion.div variants={fadeUp}>
-          <Card className="border-border/30 bg-card/50 backdrop-blur-xl overflow-hidden">
+          <Card className="border-border/30 bg-card/50 backdrop-blur-sm overflow-hidden">
             <div className="h-1 bg-gradient-to-r from-primary via-emerald-400 to-primary" />
             <CardContent className="p-5 md:p-6">
               <div className="flex flex-col md:flex-row items-center gap-5">
@@ -140,17 +140,17 @@ export default function DashboardPage() {
         {/* Stats Row */}
         <motion.div variants={fadeUp}>
           <div className="grid grid-cols-3 gap-3">
-            <motion.div whileHover={{ y: -2 }} className="rounded-xl bg-card/50 backdrop-blur-lg border border-border/30 p-3 text-center">
+            <motion.div whileHover={{ y: -2 }} className="rounded-xl bg-card/50 backdrop-blur-sm border border-border/30 p-3 text-center">
               <Flame className="h-5 w-5 text-orange-400 mx-auto mb-1 drop-shadow-[0_0_6px_rgba(251,146,60,0.5)]" />
               <p className="text-lg font-bold"><AnimatedCounter value={stats?.currentStreak ?? 0} /></p>
               <p className="text-[10px] text-muted-foreground">Tage Streak</p>
             </motion.div>
-            <motion.div whileHover={{ y: -2 }} className="rounded-xl bg-card/50 backdrop-blur-lg border border-border/30 p-3 text-center">
+            <motion.div whileHover={{ y: -2 }} className="rounded-xl bg-card/50 backdrop-blur-sm border border-border/30 p-3 text-center">
               <Trophy className="h-5 w-5 text-xp mx-auto mb-1 drop-shadow-[0_0_6px_var(--xp)]" />
               <p className="text-lg font-bold"><AnimatedCounter value={stats?.xp ?? 0} /></p>
               <p className="text-[10px] text-muted-foreground">XP {currentLevel.icon}</p>
             </motion.div>
-            <motion.div whileHover={{ y: -2 }} className="rounded-xl bg-card/50 backdrop-blur-lg border border-border/30 p-3 text-center">
+            <motion.div whileHover={{ y: -2 }} className="rounded-xl bg-card/50 backdrop-blur-sm border border-border/30 p-3 text-center">
               <Target className="h-5 w-5 text-primary mx-auto mb-1 drop-shadow-[0_0_6px_var(--primary)]" />
               <p className="text-lg font-bold"><AnimatedCounter value={Math.round(overall.correctRate * 100)} /><span className="text-xs font-normal text-muted-foreground">%</span></p>
               <p className="text-[10px] text-muted-foreground">Richtig</p>
@@ -161,17 +161,9 @@ export default function DashboardPage() {
         {/* Mastery Score Widget */}
         {hasAnswered && (
           <motion.div variants={fadeUp}>
-            <Card className="border-border/30 bg-card/50 backdrop-blur-xl overflow-hidden">
-              <CardContent className="p-5 relative">
-                {/* Animated glow */}
-                <motion.div
-                  className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-36 h-36 rounded-full blur-3xl pointer-events-none"
-                  style={{ background: `radial-gradient(circle, ${avgMastery >= 80 ? "rgba(34,197,94,0.3)" : avgMastery >= 60 ? "rgba(52,211,153,0.25)" : avgMastery >= 40 ? "rgba(234,179,8,0.25)" : avgMastery >= 20 ? "rgba(249,115,22,0.2)" : "rgba(239,68,68,0.2)"}, transparent)` }}
-                  animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
-                  transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                />
-
-                <div className="relative flex items-center justify-center gap-6">
+            <Card className="border-border/30 bg-card/50 backdrop-blur-sm overflow-hidden">
+              <CardContent className="p-5">
+                <div className="flex items-center justify-center gap-6">
                   {/* Score Ring */}
                   <motion.div initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: "spring", stiffness: 120, delay: 0.15 }}>
                     <ProgressRing progress={avgMastery} size={110} strokeWidth={8}>
@@ -237,7 +229,7 @@ export default function DashboardPage() {
             return (
               <motion.div key={hf} variants={fadeUp} whileHover={{ y: -2, scale: 1.01 }} whileTap={{ scale: 0.98 }}>
                 <Link href={`/lernen?hf=${hf}`}>
-                  <Card className={`border-border/30 bg-gradient-to-br ${HF_COLORS[hf]} backdrop-blur-lg hover:border-primary/30 transition-all group cursor-pointer`}>
+                  <Card className={`border-border/30 bg-gradient-to-br ${HF_COLORS[hf]} backdrop-blur-sm hover:border-primary/30 transition-all group cursor-pointer`}>
                     <CardContent className="p-4">
                       <div className="flex items-center gap-3">
                         <div className="h-10 w-10 rounded-xl bg-background/50 flex items-center justify-center shrink-0">
@@ -268,7 +260,7 @@ export default function DashboardPage() {
         <motion.div variants={fadeUp}>
           <div className="grid grid-cols-2 gap-3">
             <Link href="/pruefung">
-              <Card className="border-border/30 bg-card/50 backdrop-blur-lg hover:border-destructive/30 transition-all cursor-pointer group">
+              <Card className="border-border/30 bg-card/50 backdrop-blur-sm hover:border-destructive/30 transition-all cursor-pointer group">
                 <CardContent className="p-4 text-center">
                   <ClipboardCheck className="h-6 w-6 text-destructive mx-auto mb-2 group-hover:scale-110 transition-transform" />
                   <p className="text-sm font-medium">Prüfung simulieren</p>
@@ -277,7 +269,7 @@ export default function DashboardPage() {
               </Card>
             </Link>
             <Link href="/pause">
-              <Card className="border-border/30 bg-card/50 backdrop-blur-lg hover:border-xp/30 transition-all cursor-pointer group">
+              <Card className="border-border/30 bg-card/50 backdrop-blur-sm hover:border-xp/30 transition-all cursor-pointer group">
                 <CardContent className="p-4 text-center">
                   <Gamepad2 className="h-6 w-6 text-xp mx-auto mb-2 group-hover:scale-110 transition-transform" />
                   <p className="text-sm font-medium">Lernpause</p>
@@ -388,7 +380,7 @@ function LandingScreen({ signInAsGuest }: { signInAsGuest: () => Promise<void> }
           {/* Inline Login Form */}
           {showLogin && (
             <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} transition={{ duration: 0.3 }}>
-              <Card className="border-border/30 bg-card/60 backdrop-blur-xl">
+              <Card className="border-border/30 bg-card/60 backdrop-blur-sm">
                 <CardContent className="p-5 space-y-3">
                   <Button variant="outline" className="w-full h-11" onClick={handleGoogle} disabled={loading}>
                     <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
@@ -428,7 +420,7 @@ function LandingScreen({ signInAsGuest }: { signInAsGuest: () => Promise<void> }
           )}
 
           {/* Disclaimer */}
-          <div className="rounded-xl bg-card/40 backdrop-blur-lg border border-border/20 p-3 space-y-1.5">
+          <div className="rounded-xl bg-card/40 backdrop-blur-sm border border-border/20 p-3 space-y-1.5">
             <div className="flex items-start gap-2.5">
               <UserCircle className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
               <div className="text-[11px] text-muted-foreground space-y-1">
@@ -480,7 +472,7 @@ function FeedbackBanner() {
   }
 
   return (
-    <Card className="border-destructive/20 bg-gradient-to-r from-destructive/8 to-destructive/3 backdrop-blur-lg overflow-hidden">
+    <Card className="border-destructive/20 bg-gradient-to-r from-destructive/8 to-destructive/3 backdrop-blur-sm overflow-hidden">
       <div className="h-0.5 bg-gradient-to-r from-destructive/40 via-destructive/60 to-destructive/40" />
       <CardContent className="p-4">
         <div className="flex items-center gap-3">

@@ -81,16 +81,8 @@ export default function StatistikPage() {
         {/* ═══ Dein Lern-Score — THE ONE NUMBER ═══ */}
         <motion.div variants={item}>
           <Card className="border-border/30 bg-card/50 backdrop-blur-xl overflow-hidden">
-            <CardContent className="p-6 relative">
-              {/* Glow */}
-              <motion.div
-                className="absolute top-1/2 left-1/3 -translate-x-1/2 -translate-y-1/2 w-40 h-40 rounded-full blur-3xl pointer-events-none"
-                style={{ background: `radial-gradient(circle, ${ms.avgMastery >= 60 ? "rgba(52,211,153,0.25)" : ms.avgMastery >= 30 ? "rgba(234,179,8,0.2)" : "rgba(239,68,68,0.15)"}, transparent)` }}
-                animate={{ scale: [1, 1.15, 1], opacity: [0.3, 0.45, 0.3] }}
-                transition={{ duration: 4, repeat: Infinity }}
-              />
-
-              <div className="relative flex items-center gap-6">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-6">
                 <ProgressRing progress={ms.avgMastery} size={130} strokeWidth={10}>
                   <div className="text-center">
                     <motion.span
@@ -125,7 +117,7 @@ export default function StatistikPage() {
 
         {/* ═══ 4 HF Fortschrittsbalken — SIMPLE ═══ */}
         <motion.div variants={item}>
-          <Card className="border-border/30 bg-card/50 backdrop-blur-lg">
+          <Card className="border-border/30 bg-card/50 backdrop-blur-sm">
             <CardContent className="p-5 space-y-4">
               <p className="text-sm font-semibold flex items-center gap-2">
                 <BarChart3 className="h-4 w-4 text-primary" />
@@ -165,7 +157,7 @@ export default function StatistikPage() {
         {/* ═══ Schwäche + Aktion — ONE CTA ═══ */}
         {progress.size > 0 && weakestHF.pct < 60 && (
           <motion.div variants={item}>
-            <Card className="border-primary/20 bg-primary/5 backdrop-blur-lg">
+            <Card className="border-primary/20 bg-primary/5 backdrop-blur-sm">
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
                   <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
@@ -192,7 +184,7 @@ export default function StatistikPage() {
         {/* ═══ Mastery-Verteilung — SIMPLE VISUAL ═══ */}
         {progress.size > 5 && (
           <motion.div variants={item}>
-            <Card className="border-border/30 bg-card/50 backdrop-blur-lg">
+            <Card className="border-border/30 bg-card/50 backdrop-blur-sm">
               <CardContent className="p-5">
                 <p className="text-sm font-semibold mb-3">Deine Fragen</p>
 
@@ -237,7 +229,7 @@ export default function StatistikPage() {
         )}
         {/* ═══ VIBE Prüfungs-Hacks — Visual-First ═══ */}
         <motion.div variants={item}>
-          <Card className="border-[#c29b62]/20 bg-gradient-to-br from-[#c29b62]/5 to-[#2dd4bf]/5 backdrop-blur-lg overflow-hidden">
+          <Card className="border-[#c29b62]/20 bg-gradient-to-br from-[#c29b62]/5 to-[#2dd4bf]/5 backdrop-blur-sm overflow-hidden">
             <div className="h-0.5 bg-gradient-to-r from-[#c29b62]/60 via-[#2dd4bf]/60 to-[#c29b62]/60" />
             <CardContent className="p-4 space-y-3">
               <p className="text-xs font-bold bg-gradient-to-r from-[#c29b62] to-[#2dd4bf] bg-clip-text text-transparent text-center">
