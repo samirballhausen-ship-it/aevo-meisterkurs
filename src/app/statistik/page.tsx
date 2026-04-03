@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
 import { useProgress } from "@/lib/progress-context";
@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { HANDLUNGSFELDER, type Handlungsfeld } from "@/lib/types";
 import { questions } from "@/lib/questions";
 import Link from "next/link";
-import { BarChart3, Zap, Flame, BookOpen, CheckCircle2 } from "lucide-react";
+import { BarChart3, Zap, Flame, BookOpen, CheckCircle2, ChevronDown } from "lucide-react";
 
 const container = {
   hidden: { opacity: 0 },
@@ -246,120 +246,295 @@ export default function StatistikPage() {
           </motion.div>
         )}
         {/* ═══ VIBE Prüfungs-Hacks ═══ */}
-        <motion.div variants={item}>
-          <Card className="border-[#c29b62]/20 bg-gradient-to-br from-[#c29b62]/5 to-[#2dd4bf]/5 overflow-hidden">
-            <div className="h-0.5 bg-gradient-to-r from-[#c29b62]/60 via-[#2dd4bf]/60 to-[#c29b62]/60" />
-            <CardContent className="p-4 space-y-4">
-              <p className="text-xs font-bold bg-gradient-to-r from-[#c29b62] to-[#2dd4bf] bg-clip-text text-transparent text-center">
-                Prüfungs-Hacks
-              </p>
+        <VibeHacks />
+      </motion.main>
+    </div>
+  );
+}
 
-              {/* Hero: 52% Bestanden — animated gauge */}
-              <div className="flex items-center justify-center">
-                <div className="relative">
-                  <ProgressRing progress={52} size={100} strokeWidth={8}>
-                    <div className="text-center">
-                      <motion.p
-                        className="text-2xl font-black text-success"
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        transition={{ type: "spring", delay: 0.3 }}
-                      >
-                        52%
-                      </motion.p>
-                      <p className="text-[7px] text-muted-foreground">nur mit Hacks</p>
-                    </div>
-                  </ProgressRing>
+// ═══════════════════════════════════════════════════════════════════════════
+// VIBE Prüfungs-Hacks — Interactive Expandable Patterns
+// ═══════════════════════════════════════════════════════════════════════════
+
+const PATTERNS = [
+  {
+    id: "extreme",
+    icon: "🚫",
+    title: "Extremwörter = FALSCH",
+    stat: "100%",
+    statLabel: "falsch",
+    color: "text-destructive",
+    bg: "bg-destructive/8",
+    border: "border-destructive/20",
+    detail: "Antworten mit \"nur\", \"immer\", \"nie\", \"niemals\", \"ausschließlich\" oder \"stets\" sind in 110 von 110 Fällen FALSCH gewesen. Das ist der stärkste Hack — null Ausnahmen. Sobald du eins dieser Wörter siehst: sofort streichen.",
+    words: ["nur", "immer", "nie", "stets", "ausschließlich"],
+    wordColor: "bg-destructive/15 text-destructive",
+  },
+  {
+    id: "length",
+    icon: "📏",
+    title: "Deutlich längere Antwort = RICHTIG",
+    stat: "93%",
+    statLabel: "richtig",
+    color: "text-success",
+    bg: "bg-success/8",
+    border: "border-success/20",
+    detail: "Wenn eine Antwort doppelt so lang ist wie die anderen: 93% Trefferquote. Bei 50% länger: 86%. Bei 25% länger: 71%. Je größer der Längenunterschied, desto sicherer. Warum? Die richtige Antwort enthält oft Präzisierungen die falsche Antworten absichtlich weglassen.",
+    words: ["2x länger = 93%", "1.5x = 86%", "1.25x = 71%"],
+    wordColor: "bg-success/15 text-success",
+  },
+  {
+    id: "negation",
+    icon: "❌",
+    title: "Verneinungen = meistens FALSCH",
+    stat: "75%",
+    statLabel: "falsch",
+    color: "text-orange-500",
+    bg: "bg-orange-500/8",
+    border: "border-orange-500/20",
+    detail: "Antworten mit \"nicht\", \"kein\" oder \"keine\" sind in 3 von 4 Fällen falsch. Verneinungen werden oft benutzt um plausibel klingende aber falsche Optionen zu bauen.",
+    words: ["nicht", "kein", "keine"],
+    wordColor: "bg-orange-500/15 text-orange-500",
+  },
+  {
+    id: "position",
+    icon: "🅰️",
+    title: "Antwort A ist am häufigsten richtig",
+    stat: "47%",
+    statLabel: "richtig",
+    color: "text-xp",
+    bg: "bg-xp/8",
+    border: "border-xp/20",
+    detail: "Fast jede zweite Frage hat A als richtige Antwort (47% statt erwartete 22%). Besonders bei HF3 (Didaktik): 57% A richtig. Ausnahme: Bei HF4 (Prüfung) ist die letzte Antwort am häufigsten richtig.",
+    words: ["HF3: 57% A", "HF4: letzte!"],
+    wordColor: "bg-xp/15 text-xp",
+  },
+  {
+    id: "combi",
+    icon: "🔗",
+    title: "Kombinations-Antworten gewinnen",
+    stat: "71%",
+    statLabel: "richtig",
+    color: "text-primary",
+    bg: "bg-primary/8",
+    border: "border-primary/20",
+    detail: "Antworten die mehrere Aspekte mit \"und\" verknüpfen sind zu 71% richtig. Die richtige Antwort ist fast immer die differenzierteste und umfassendste Option.",
+    words: ["und...und", "sowohl...als auch"],
+    wordColor: "bg-primary/15 text-primary",
+  },
+  {
+    id: "traps",
+    icon: "⚠️",
+    title: "Fallen erkennen",
+    stat: "3",
+    statLabel: "Fallen",
+    color: "text-destructive",
+    bg: "bg-destructive/5",
+    border: "border-destructive/15",
+    detail: "\"grundsätzlich\" und \"in der Regel\" klingen differenziert — sind aber 0% richtig! \"Berufsschule\" als Antwort ist zu 90% falsch. Konkrete Zahlen (\"X Monate\") sind zu 82% falsch. Der \"HWK ist immer richtig\"-Mythos stimmt nicht: nur 37%.",
+    words: ["grundsätzlich 0%", "Berufsschule 90% falsch", "HWK nur 37%"],
+    wordColor: "bg-destructive/15 text-destructive",
+  },
+];
+
+function VibeHacks() {
+  const [expanded, setExpanded] = useState<string | null>(null);
+  const [showGuide, setShowGuide] = useState(false);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="space-y-3"
+    >
+      {/* Header */}
+      <Card className="border-[#c29b62]/20 bg-gradient-to-br from-[#c29b62]/5 to-[#2dd4bf]/5 overflow-hidden">
+        <div className="h-0.5 bg-gradient-to-r from-[#c29b62]/60 via-[#2dd4bf]/60 to-[#c29b62]/60" />
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-bold bg-gradient-to-r from-[#c29b62] to-[#2dd4bf] bg-clip-text text-transparent">
+              Prüfungs-Hacks
+            </p>
+            <Badge variant="outline" className="text-[8px] border-[#c29b62]/30 text-[#c29b62]">
+              211 Fragen analysiert
+            </Badge>
+          </div>
+          <p className="text-[10px] text-muted-foreground mt-1">
+            Muster in den Antworten. Tippe auf ein Muster für Details.
+          </p>
+        </CardContent>
+      </Card>
+
+      {/* Expandable Pattern Cards */}
+      {PATTERNS.map((p, i) => (
+        <motion.div
+          key={p.id}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: i * 0.05 }}
+        >
+          <Card
+            className={cn("border overflow-hidden cursor-pointer transition-all", p.border, expanded === p.id ? p.bg : "hover:border-primary/20")}
+            onClick={() => setExpanded(expanded === p.id ? null : p.id)}
+          >
+            <CardContent className="p-0">
+              {/* Always visible row */}
+              <div className="flex items-center gap-3 p-3">
+                <div className={cn("h-10 w-10 rounded-xl flex items-center justify-center shrink-0", p.bg)}>
+                  <span className="text-lg">{p.icon}</span>
                 </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-bold">{p.title}</p>
+                  <div className="flex gap-1 mt-1">
+                    {p.words.slice(0, 3).map((w) => (
+                      <span key={w} className={cn("text-[7px] px-1.5 py-0.5 rounded-full font-medium", p.wordColor)}>{w}</span>
+                    ))}
+                  </div>
+                </div>
+                <div className="text-right shrink-0">
+                  <p className={cn("text-xl font-black leading-none", p.color)}>{p.stat}</p>
+                  <p className="text-[7px] text-muted-foreground">{p.statLabel}</p>
+                </div>
+                <ChevronDown className={cn("h-4 w-4 text-muted-foreground shrink-0 transition-transform", expanded === p.id && "rotate-180")} />
               </div>
-              <p className="text-[10px] text-center text-muted-foreground">
-                3 Schritte ohne Fachwissen = <strong className="text-success">Bestanden</strong> (50% nötig)
-              </p>
 
-              {/* 3 Steps — visual flow with animated entrance */}
-              <div className="space-y-2">
-                {[
-                  {
-                    step: 1,
-                    icon: "🚫",
-                    title: "Streiche Extremes",
-                    words: ["nur", "immer", "nie", "stets"],
-                    stat: "100% falsch",
-                    statColor: "text-destructive",
-                    bg: "from-destructive/10 to-destructive/5",
-                    border: "border-destructive/20",
-                    delay: 0.1,
-                  },
-                  {
-                    step: 2,
-                    icon: "❌",
-                    title: "Streiche Verneinungen",
-                    words: ["nicht", "kein", "keine"],
-                    stat: "75% falsch",
-                    statColor: "text-orange-500",
-                    bg: "from-orange-500/10 to-orange-500/5",
-                    border: "border-orange-500/20",
-                    delay: 0.2,
-                  },
-                  {
-                    step: 3,
-                    icon: "📏",
-                    title: "Nimm die Längste",
-                    words: ["doppelt so lang = 93%"],
-                    stat: "93% richtig",
-                    statColor: "text-success",
-                    bg: "from-success/10 to-success/5",
-                    border: "border-success/20",
-                    delay: 0.3,
-                  },
-                ].map((s) => (
+              {/* Expandable detail */}
+              <AnimatePresence>
+                {expanded === p.id && (
                   <motion.div
-                    key={s.step}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: s.delay }}
-                    className={cn("rounded-xl border bg-gradient-to-r p-3 flex items-center gap-3", s.bg, s.border)}
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="overflow-hidden"
                   >
-                    <div className="h-10 w-10 rounded-full bg-background/60 flex items-center justify-center shrink-0">
-                      <span className="text-lg">{s.icon}</span>
+                    <div className={cn("px-3 pb-3 pt-0 border-t", p.border)}>
+                      <p className="text-[11px] text-muted-foreground leading-relaxed mt-2">
+                        {p.detail}
+                      </p>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-bold">{s.title}</p>
-                      <div className="flex flex-wrap gap-1 mt-1">
-                        {s.words.map((w) => (
-                          <span key={w} className="text-[8px] px-1.5 py-0.5 rounded bg-background/50 text-muted-foreground">{w}</span>
-                        ))}
-                      </div>
-                    </div>
-                    <p className={cn("text-sm font-black shrink-0", s.statColor)}>{s.stat.split(" ")[0]}</p>
                   </motion.div>
-                ))}
-              </div>
-
-              {/* Fallen — red pills */}
-              <div className="rounded-xl bg-destructive/5 border border-destructive/15 p-3">
-                <p className="text-[9px] font-bold text-destructive mb-2 text-center">Fallen erkennen</p>
-                <div className="grid grid-cols-3 gap-2 text-center">
-                  <div>
-                    <p className="text-lg font-black text-destructive">0%</p>
-                    <p className="text-[8px] text-muted-foreground">&quot;grundsätzlich&quot;</p>
-                  </div>
-                  <div>
-                    <p className="text-lg font-black text-destructive">10%</p>
-                    <p className="text-[8px] text-muted-foreground">&quot;Berufsschule&quot;</p>
-                  </div>
-                  <div>
-                    <p className="text-lg font-black text-destructive">18%</p>
-                    <p className="text-[8px] text-muted-foreground">Konkrete Zahlen</p>
-                  </div>
-                </div>
-              </div>
-
-              <p className="text-[7px] text-muted-foreground/40 text-center">Analyse: 211 MC-Fragen. Kein Ersatz fürs Lernen!</p>
+                )}
+              </AnimatePresence>
             </CardContent>
           </Card>
         </motion.div>
-      </motion.main>
-    </div>
+      ))}
+
+      {/* ═══ BLACKOUT GUIDE ═══ */}
+      <Card
+        className={cn(
+          "border-[#c29b62]/25 overflow-hidden cursor-pointer transition-all",
+          showGuide ? "bg-gradient-to-br from-[#c29b62]/8 to-[#2dd4bf]/8" : "",
+        )}
+        onClick={() => setShowGuide(!showGuide)}
+      >
+        <CardContent className="p-0">
+          <div className="flex items-center gap-3 p-3">
+            <div className="h-10 w-10 rounded-xl bg-[#c29b62]/15 flex items-center justify-center shrink-0">
+              <span className="text-lg">🆘</span>
+            </div>
+            <div className="flex-1">
+              <p className="text-xs font-bold bg-gradient-to-r from-[#c29b62] to-[#2dd4bf] bg-clip-text text-transparent">
+                Blackout? So gehst du vor.
+              </p>
+              <p className="text-[9px] text-muted-foreground mt-0.5">Schritt-für-Schritt wenn du die Antwort nicht weißt</p>
+            </div>
+            <div className="text-right shrink-0">
+              <p className="text-xl font-black text-success leading-none">52%</p>
+              <p className="text-[7px] text-muted-foreground">= bestanden</p>
+            </div>
+            <ChevronDown className={cn("h-4 w-4 text-muted-foreground shrink-0 transition-transform", showGuide && "rotate-180")} />
+          </div>
+
+          <AnimatePresence>
+            {showGuide && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.25 }}
+                className="overflow-hidden"
+              >
+                <div className="px-3 pb-4 pt-1 border-t border-[#c29b62]/15 space-y-3">
+                  <p className="text-[10px] text-muted-foreground">
+                    Diese 5 Schritte bringen dich von <strong className="text-foreground">20% (Zufall)</strong> auf <strong className="text-success">52% (Bestanden)</strong> — komplett ohne Fachwissen:
+                  </p>
+
+                  {[
+                    {
+                      step: "1",
+                      action: "Lies alle Antworten durch",
+                      detail: "Suche nach den Signalwörtern",
+                      color: "bg-muted/50 text-foreground",
+                      arrow: true,
+                    },
+                    {
+                      step: "🚫",
+                      action: "Streiche \"nur/immer/nie/stets\"",
+                      detail: "100% Trefferquote — null Ausnahmen",
+                      color: "bg-destructive/15 text-destructive",
+                      arrow: true,
+                    },
+                    {
+                      step: "❌",
+                      action: "Streiche \"nicht/kein/keine\"",
+                      detail: "75% sind Fallen",
+                      color: "bg-orange-500/15 text-orange-500",
+                      arrow: true,
+                    },
+                    {
+                      step: "📏",
+                      action: "Vergleiche die Länge der Restlichen",
+                      detail: "Ist eine deutlich länger? → Die ist's (93%)",
+                      color: "bg-success/15 text-success",
+                      arrow: true,
+                    },
+                    {
+                      step: "🅰️",
+                      action: "Alle gleich lang? → Nimm A",
+                      detail: "47% Trefferquote. Bei HF4: nimm die Letzte.",
+                      color: "bg-xp/15 text-xp",
+                      arrow: false,
+                    },
+                  ].map((s, idx) => (
+                    <div key={idx}>
+                      <div className="flex items-center gap-2.5">
+                        <div className={cn("h-8 w-8 rounded-lg flex items-center justify-center shrink-0 text-sm font-black", s.color)}>
+                          {s.step}
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-[11px] font-bold">{s.action}</p>
+                          <p className="text-[9px] text-muted-foreground">{s.detail}</p>
+                        </div>
+                      </div>
+                      {s.arrow && (
+                        <div className="flex justify-center py-0.5">
+                          <div className="w-0.5 h-3 bg-muted/40 rounded-full" />
+                        </div>
+                      )}
+                    </div>
+                  ))}
+
+                  {/* Result */}
+                  <div className="rounded-xl bg-success/10 border border-success/20 p-3 text-center">
+                    <div className="flex items-center justify-center gap-3">
+                      <ProgressRing progress={52} size={50} strokeWidth={5}>
+                        <span className="text-sm font-black text-success">52%</span>
+                      </ProgressRing>
+                      <div className="text-left">
+                        <p className="text-xs font-bold text-success">= Bestanden</p>
+                        <p className="text-[9px] text-muted-foreground">50% nötig, 20% wäre Zufall</p>
+                        <p className="text-[9px] text-muted-foreground">+160% besser als blindes Raten</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </CardContent>
+      </Card>
+    </motion.div>
   );
 }
