@@ -339,27 +339,43 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
   // ─── Streak Build: Questions answered but not yet 3x correct in a row ──────
 
   const getStreakBuildQuestions = useCallback((hf?: Handlungsfeld, count = 20) => {
-    return Array.from(progress.entries())
+    const candidates = Array.from(progress.entries())
       .filter(([id, p]) => {
         const q = questions.find((qq) => qq.id === id);
         if (!q) return false;
         if (hf && q.handlungsfeld !== hf) return false;
         const streak = p.streak ?? 0;
         const attempts = p.timesCorrect + p.timesWrong;
-        // Must have been answered at least once, but streak < 3
         return attempts >= 1 && streak < 3;
       })
-      .sort(([, a], [, b]) => {
-        // Prioritize: higher mastery but low streak first (almost there!)
-        // Then lower mastery (needs more work)
-        const aScore = (a.streak ?? 0) * 30 + (a.mastery ?? 0);
-        const bScore = (b.streak ?? 0) * 30 + (b.mastery ?? 0);
-        // Higher streak first (close to proving), then by mastery desc
-        if ((a.streak ?? 0) !== (b.streak ?? 0)) return (b.streak ?? 0) - (a.streak ?? 0);
-        return (b.mastery ?? 0) - (a.mastery ?? 0);
-      })
-      .slice(0, count)
-      .map(([id]) => id);
+      .map(([id, p]) => ({ id, streak: p.streak ?? 0 }));
+
+    // Fair mix: ~40% streak 0 (unsicher), ~40% streak 1, ~20% streak 2
+    // So it's not always the same streak-2 questions repeating
+    const s0 = candidates.filter((c) => c.streak === 0).sort(() => Math.random() - 0.5);
+    const s1 = candidates.filter((c) => c.streak === 1).sort(() => Math.random() - 0.5);
+    const s2 = candidates.filter((c) => c.streak === 2).sort(() => Math.random() - 0.5);
+
+    const slots0 = Math.min(Math.ceil(count * 0.4), s0.length);
+    const slots2 = Math.min(Math.ceil(count * 0.2), s2.length);
+    const slots1 = Math.min(count - slots0 - slots2, s1.length);
+    const rest = count - slots0 - slots1 - slots2;
+
+    const selected = [
+      ...s0.slice(0, slots0),
+      ...s1.slice(0, slots1),
+      ...s2.slice(0, slots2),
+      // Fill remaining from any pool
+      ...[...s0.slice(slots0), ...s1.slice(slots1), ...s2.slice(slots2)].slice(0, rest),
+    ];
+
+    // Shuffle final selection
+    for (let i = selected.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [selected[i], selected[j]] = [selected[j], selected[i]];
+    }
+
+    return selected.slice(0, count).map((c) => c.id);
   }, [progress]);
 
   // ─── Legacy Selection Functions (still used by some modes) ─────────────────
